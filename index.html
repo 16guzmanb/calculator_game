@@ -46,12 +46,14 @@
       right: 0;
       top: 0;
       z-index: 50;
+      height: 48px;              /* <-- key */
       background: var(--overlay-bg);
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 12px;
+      padding: 8px 12px;
+      box-sizing: border-box;
       gap: 12px;
     }
 
@@ -77,20 +79,25 @@
     /* Main layout: left nav + main content */
     .layout {
       position: absolute;
-      inset: 0;
-      display: grid;
-      grid-template-columns: 150px 1fr;
+      left: 0;
+      right: 0;
+      top: 48px;   /* <-- matches topbar height */
+      bottom: 0;
     }
 
     /* Left nav (inside the frame) */
     .side-nav {
-      background: rgba(0,0,0,0.35);
-      padding: 62px 10px 12px; /* leaves room under the topbar */
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      width: 130px;
+      z-index: 20;
+    
+      background: transparent;   /* <-- no sidebar panel */
+      padding: 0;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      align-items: stretch;
-      justify-content: flex-start;
     }
 
     .nav-btn {
@@ -110,8 +117,8 @@
 
     /* Main content area */
     .main {
-      position: relative;
-      padding-top: 52px; /* creates breathing space under topbar */
+      position: absolute;
+      inset: 0;
       overflow: hidden;
     }
 
@@ -133,6 +140,8 @@
       display: grid;
       place-items: center;
       padding: 10px;
+      padding-left: 170px; /* <-- makes room for nav beside calc */
+      box-sizing: border-box;
     }
 
     .calc {
@@ -194,9 +203,9 @@
     .keypad {
       position: absolute;
       left: 34%;
-      top: 44%;
+      top: 50%;      /* <-- DOWN */
       width: 54%;
-      height: 50%;
+      height: 44%;   /* <-- SHORTER */
       z-index: 6;
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 0.9fr;
