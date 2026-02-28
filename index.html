@@ -77,27 +77,23 @@
     .tiny { font-size: 12px; opacity: 0.85; }
 
     /* Main layout: left nav + main content */
-    .layout {
-      position: absolute;
-      left: 0;
-      right: 0;
-      top: 48px;   /* <-- matches topbar height */
-      bottom: 0;
+    .layout{
+      position:absolute;
+      inset:0;          /* <-- full frame again */
     }
 
     /* Left nav (inside the frame) */
-    .side-nav {
-      position: absolute;
-      left: 14px;
-      top: 14px;
-      width: 130px;
-      z-index: 20;
-    
-      background: transparent;   /* <-- no sidebar panel */
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    .side-nav{
+      position:absolute;
+      left:14px;
+      top:64px;         /* <-- below header */
+      width:130px;
+      z-index:60;       /* above calculator image */
+      background:transparent;
+      padding:0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
 
     .nav-btn {
@@ -134,20 +130,19 @@
     }
 
     /* ====== CALCULATOR PAGE ====== */
-    .calculator-stage {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      place-items: center;
-      padding: 10px;
-      padding-left: 170px; /* <-- makes room for nav beside calc */
-      box-sizing: border-box;
+    .calculator-stage{
+      position:absolute;
+      inset:0;
+      display:grid;
+      place-items:center;
+      padding:0;        /* <-- important: no padding shrink */
     }
 
-    .calc {
-      position: relative;
-      height: 95%;
-      aspect-ratio: 170 / 107;
+    .calc{
+      position:relative;
+      height:92%;       /* <-- makes it BIG */
+      width:auto;
+      aspect-ratio:170/107;
     }
 
     .calc img {
