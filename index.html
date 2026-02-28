@@ -6,29 +6,53 @@
   <title>Cutesy Calculator Game</title>
   <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --page-bg: #2b2b2b;
+      --frame-bg: #111;
+      --overlay-bg: rgba(0,0,0,0.85);
+      --btn-black: #111;
+      --btn-white: #fff;
+    }
+
     body {
+      margin: 0;
       font-family: 'Bubblegum Sans', cursive;
-      padding: 16px;
-      background: #fffafc;
+      background: var(--page-bg);
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 18px;
     }
 
     h1, h2, h3, button, input, select, label, p, div {
       font-family: 'Bubblegum Sans', cursive;
     }
 
+    /* ====== GAME FRAME ====== */
+    .game-frame {
+      width: min(900px, 100%);
+      aspect-ratio: 170 / 107; /* matches your pixel mockups */
+      background: var(--frame-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 12px 50px rgba(0,0,0,0.45);
+    }
+
+    /* Top overlay bar (always visible) */
     .topbar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      z-index: 50;
+      background: var(--overlay-bg);
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
       padding: 10px 12px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      margin-bottom: 12px;
-      position: sticky;
-      top: 0;
-      background: #fff;
-      z-index: 10;
+      gap: 12px;
     }
 
     .hearts {
@@ -48,37 +72,246 @@
       text-align: right;
     }
 
-    .nav-btn { margin-right: 10px; padding: 6px 10px; cursor: pointer; }
-    .page { display: none; margin-top: 12px; border: 1px solid #ccc; padding: 16px; border-radius: 10px; }
-    #game-page { display: block; }
+    .tiny { font-size: 12px; opacity: 0.85; }
 
-    #question-text { margin: 16px 0; }
+    /* Main layout: left nav + main content */
+    .layout {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: 150px 1fr;
+    }
 
-    #answer-input { font-size: 18px; padding: 6px 8px; width: 140px; }
-    button { padding: 6px 10px; }
+    /* Left nav (inside the frame) */
+    .side-nav {
+      background: rgba(0,0,0,0.35);
+      padding: 62px 10px 12px; /* leaves room under the topbar */
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: stretch;
+      justify-content: flex-start;
+    }
 
-    #feedback-text { margin-top: 12px; font-weight: 600; min-height: 1.2em; }
+    .nav-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 10px;
+      cursor: pointer;
+      font-size: 16px;
+      background: #f2f2f2;
+      color: #111;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.22);
+    }
 
-    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .nav-btn.active {
+      outline: 3px solid rgba(255, 105, 180, 0.6);
+    }
 
-    .tiny { font-size: 12px; opacity: 0.75; }
+    /* Main content area */
+    .main {
+      position: relative;
+      padding-top: 52px; /* creates breathing space under topbar */
+      overflow: hidden;
+    }
 
-    /* --- ROOM LAYERS --- */
+    .page {
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding: 12px;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* ====== CALCULATOR PAGE ====== */
+    .calculator-stage {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 10px;
+    }
+
+    .calc {
+      position: relative;
+      width: min(680px, 100%);
+      aspect-ratio: 170 / 107;
+      image-rendering: pixelated;
+    }
+
+    .calc img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: pixelated;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    /* Display text sits on the gray screen area */
+    .calc-display {
+      position: absolute;
+      left: 32%;
+      top: 18%;
+      width: 58%;
+      height: 20%;
+      z-index: 5;
+      color: #111;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px 10px;
+      box-sizing: border-box;
+      text-shadow: none;
+    }
+
+    .equation {
+      font-size: 18px;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .answerline {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .feedback {
+      font-size: 14px;
+      min-height: 18px;
+    }
+
+    /* Keypad */
+    .keypad {
+      position: absolute;
+      left: 34%;
+      top: 44%;
+      width: 54%;
+      height: 50%;
+      z-index: 6;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 0.9fr;
+      grid-template-rows: 1fr 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .key {
+      border: 0;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 22px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    }
+
+    .key.num {
+      background: var(--btn-black);
+      color: #fff;
+    }
+
+    .key.action {
+      background: var(--btn-black);
+      color: #fff;
+      font-size: 18px;
+    }
+
+    .key.mode {
+      background: var(--btn-white);
+      color: #111;
+      font-weight: 800;
+    }
+
+    .key.mode.active {
+      outline: 4px solid rgba(0,0,0,0.35);
+    }
+
+    /* Layout for keypad positions */
+    .k1 { grid-column: 1; grid-row: 1; }
+    .k2 { grid-column: 2; grid-row: 1; }
+    .k3 { grid-column: 3; grid-row: 1; }
+
+    .k4 { grid-column: 1; grid-row: 2; }
+    .k5 { grid-column: 2; grid-row: 2; }
+    .k6 { grid-column: 3; grid-row: 2; }
+
+    .k7 { grid-column: 1; grid-row: 3; }
+    .k8 { grid-column: 2; grid-row: 3; }
+    .k9 { grid-column: 3; grid-row: 3; }
+
+    .k0 { grid-column: 2; grid-row: 4; }
+
+    .kPlus { grid-column: 4; grid-row: 1; }
+    .kMinus { grid-column: 4; grid-row: 2; }
+    .kBoth { grid-column: 4; grid-row: 3; }
+
+    .kClear { grid-column: 1; grid-row: 4; }
+    .kOK { grid-column: 3; grid-row: 4; }
+
+    /* ====== BANK PAGE (simple list) ====== */
+    .bank-panel {
+      width: min(680px, 100%);
+      margin: 0 auto;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 16px;
+      padding: 14px;
+      color: #fff;
+    }
+
+    .bank-panel h2 { margin: 0 0 8px; }
+
+    .tx-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .tx-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+      background: #f2f2f2;
+      color: #111;
+    }
+
+    #tx-list {
+      margin-top: 10px;
+      padding: 0;
+      list-style: none;
+    }
+
+    #tx-list li {
+      margin: 8px 0;
+      font-weight: 800;
+    }
+
+    /* ====== ROOM PAGE (kept simple for now) ====== */
     .room-stage {
       position: relative;
-      width: min(520px, 100%);
+      width: min(680px, 100%);
       aspect-ratio: 170 / 107;
-      border: 1px solid #ccc;
-      border-radius: 10px;
+      border-radius: 16px;
       overflow: hidden;
-      background: #fff;
+      margin: 0 auto;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.05);
       image-rendering: pixelated;
     }
 
     .room-stage img {
       position: absolute;
-      left: 0;
-      top: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: contain;
@@ -114,123 +347,137 @@
       cursor: pointer;
     }
 
-    .closet-hitbox:focus-visible {
-      outline: 2px dashed #ff69b4;
-      outline-offset: 2px;
-    }
-
     #closet-overlay {
       z-index: 10;
       display: none;
       cursor: pointer;
     }
-
-    ul { margin: 10px 0 0; padding-left: 18px; }
-    li { margin: 6px 0; }
   </style>
 </head>
 <body>
+  <div class="game-frame">
 
-  <!-- Persistent top bar (visible on all pages) -->
-  <div class="topbar">
-    <div>
-      <div class="hearts" id="hearts"></div>
-      <div class="tiny" id="hearts-hint">Get 10 hearts → +$1</div>
-    </div>
-    <div class="bank">
-      <div>Available: $<span id="money-display">0</span></div>
-      <div class="tiny">Pending: $<span id="pending-display">0</span></div>
-    </div>
-  </div>
-
-  <!-- Navigation -->
-  <div class="row">
-    <button class="nav-btn" onclick="showPage('game-page')">Calculator</button>
-    <button class="nav-btn" onclick="showPage('bank-page')">Bank</button>
-    <button class="nav-btn" onclick="showPage('store-page')">Store</button>
-    <button class="nav-btn" onclick="showPage('room-page')">Room</button>
-  </div>
-
-  <!-- Pages -->
-  <div id="game-page" class="page">
-    <h2>Calculator Game</h2>
-
-    <div class="row">
-      <label for="mode-select">Mode:</label>
-      <select id="mode-select" onchange="generateQuestion()">
-        <option value="add">Addition Only</option>
-        <option value="sub">Subtraction Only</option>
-        <option value="mix">50/50 Mix (+ - + -)</option>
-      </select>
+    <!-- Overlay bar (always visible, inside the frame) -->
+    <div class="topbar">
+      <div>
+        <div class="hearts" id="hearts"></div>
+        <div class="tiny" id="hearts-hint">Get 10 hearts → +$1</div>
+      </div>
+      <div class="bank">
+        <div>Available: $<span id="money-display">0</span></div>
+        <div class="tiny">Pending: $<span id="pending-display">0</span></div>
+      </div>
     </div>
 
-    <h1 id="question-text">? + ? = ?</h1>
+    <div class="layout">
+      <!-- Left nav inside frame -->
+      <div class="side-nav">
+        <button class="nav-btn active" id="nav-calc" onclick="showPage('game-page')">Calculator</button>
+        <button class="nav-btn" id="nav-bank" onclick="showPage('bank-page')">Bank</button>
+        <button class="nav-btn" id="nav-store" onclick="showPage('store-page')">Shop</button>
+        <button class="nav-btn" id="nav-room" onclick="showPage('room-page')">Room</button>
+      </div>
 
-    <div class="row">
-      <input type="number" id="answer-input" placeholder="Answer" />
-      <button onclick="checkAnswer()">Submit</button>
+      <div class="main">
+        <!-- Calculator -->
+        <div id="game-page" class="page active">
+          <div class="calculator-stage">
+            <div class="calc" aria-label="Calculator">
+              <img src="calculator_ui.png" alt="Calculator UI" />
+
+              <div class="calc-display" aria-live="polite">
+                <div class="equation" id="equation-text">…</div>
+                <div class="answerline" id="answer-text"> </div>
+                <div class="feedback" id="feedback-text"></div>
+              </div>
+
+              <div class="keypad" aria-label="Keypad">
+                <button class="key num k1" onclick="pressDigit(1)">1</button>
+                <button class="key num k2" onclick="pressDigit(2)">2</button>
+                <button class="key num k3" onclick="pressDigit(3)">3</button>
+
+                <button class="key num k4" onclick="pressDigit(4)">4</button>
+                <button class="key num k5" onclick="pressDigit(5)">5</button>
+                <button class="key num k6" onclick="pressDigit(6)">6</button>
+
+                <button class="key num k7" onclick="pressDigit(7)">7</button>
+                <button class="key num k8" onclick="pressDigit(8)">8</button>
+                <button class="key num k9" onclick="pressDigit(9)">9</button>
+
+                <button class="key action kClear" onclick="clearAnswer()">Clear</button>
+                <button class="key num k0" onclick="pressDigit(0)">0</button>
+                <button class="key action kOK" onclick="submitAnswer()">OK</button>
+
+                <button class="key mode kPlus" id="mode-plus" onclick="setMode('add')">+</button>
+                <button class="key mode kMinus" id="mode-minus" onclick="setMode('sub')">−</button>
+                <button class="key mode kBoth" id="mode-both" onclick="setMode('mix')">Both</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bank -->
+        <div id="bank-page" class="page">
+          <div class="bank-panel">
+            <h2>The Bank</h2>
+            <div class="tiny">(No saving yet — refreshing resets the bank for now.)</div>
+
+            <div class="tx-head">
+              <h3 style="margin: 0;">Transactions</h3>
+              <button class="tx-btn" id="tx-toggle" onclick="toggleTxView()">View All</button>
+            </div>
+            <div class="tiny" id="tx-subtitle">Showing 10 most recent.</div>
+            <ul id="tx-list"></ul>
+          </div>
+        </div>
+
+        <!-- Store -->
+        <div id="store-page" class="page">
+          <div class="bank-panel">
+            <h2>The Shop</h2>
+            <p><strong>Coming soon.</strong></p>
+          </div>
+        </div>
+
+        <!-- Room -->
+        <div id="room-page" class="page">
+          <div class="bank-panel">
+            <h2>My Room</h2>
+            <div class="room-stage" id="room-stage">
+              <img id="room-bg" src="room_ui.png" alt="Room background" />
+              <div class="character-layer" id="character-layer" aria-hidden="true"></div>
+              <div class="items-layer" id="items-layer" aria-hidden="true"></div>
+              <button class="closet-hitbox" id="closet-hitbox" type="button" aria-label="Open closet"></button>
+              <img id="closet-overlay" src="closet_open.png" alt="Closet open" />
+            </div>
+            <div class="tiny" style="margin-top: 8px;">Click the pink closet door to open it.</div>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <p id="feedback-text"></p>
-  </div>
-
-  <div id="bank-page" class="page">
-    <h2>The Bank</h2>
-    <p class="tiny">(No saving yet — refreshing resets the bank for now.)</p>
-
-    <div class="row" style="justify-content: space-between; align-items: center;">
-      <h3 style="margin: 0;">Transactions</h3>
-      <button id="tx-toggle" onclick="toggleTxView()">View All</button>
-    </div>
-    <div class="tiny" id="tx-subtitle">Showing 10 most recent.</div>
-    <div id="tx-list">No transactions yet — earn $1 by filling the hearts!</div>
-  </div>
-
-  <div id="store-page" class="page">
-    <h2>The Store</h2>
-    <p><strong>Coming soon.</strong></p>
-    <p class="tiny">(Later: pixel items, prices, buy button.)</p>
-  </div>
-
-  <div id="room-page" class="page">
-    <h2>My Room</h2>
-
-    <div class="room-stage" id="room-stage">
-      <!-- Layer 1: Room background -->
-      <img id="room-bg" src="room_ui.png" alt="Room background" />
-
-      <!-- Layer 2: Character (you'll add later) -->
-      <div class="character-layer" id="character-layer" aria-hidden="true"></div>
-
-      <!-- Layer 3: Equipped items (posters, furniture, etc.) -->
-      <div class="items-layer" id="items-layer" aria-hidden="true"></div>
-
-      <!-- Clickable closet door area -->
-      <button class="closet-hitbox" id="closet-hitbox" type="button" aria-label="Open closet"></button>
-
-      <!-- Closet open overlay (full image overlay) -->
-      <img id="closet-overlay" src="closet_open.png" alt="Closet open" />
-    </div>
-
-    <p class="tiny">Click the pink closet door to open it. (Later it will show purchased items.)</p>
   </div>
 
   <script>
-    // --- PAGE SWITCHING LOGIC ---
+    // ===== NAV + PAGE SWITCHING =====
+    const navMap = {
+      'game-page': 'nav-calc',
+      'bank-page': 'nav-bank',
+      'store-page': 'nav-store',
+      'room-page': 'nav-room'
+    };
+
     function showPage(pageId) {
-      document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
-      document.getElementById(pageId).style.display = 'block';
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
 
-      // keep topbar + hourly release up to date
+      Object.values(navMap).forEach(id => document.getElementById(id).classList.remove('active'));
+      document.getElementById(navMap[pageId]).classList.add('active');
+
       renderTopBar();
-
-      if (pageId === 'bank-page') {
-        renderBank();
-      }
+      if (pageId === 'bank-page') renderBank();
     }
 
-    // --- GAME LOGIC ---
-    // Ranges are internal only (not shown to user)
+    // ===== CORE GAME LOGIC =====
     const ranges = [[0,5], [6,10], [11,20], [21,40], [41,59], [60,70], [71,81], [82,92], [93,100]];
 
     let tierIndex = 0;
@@ -238,26 +485,36 @@
     let wrongStreak = 0;
 
     // Economy
-    let money = 0; // available balance
+    let money = 0; // available
     let heartsFilled = 0; // 0..10
-
-    // Pending dollars earned this clock hour (released at top of next hour)
     let pendingDollarsThisHour = 0;
     let pendingHourKey = null;
 
-    // Bank log (in-memory for now; we'll add saving later)
+    // Bank log (in-memory)
     let transactions = []; // { type: 'deposit'|'deduction', amount: number, at: Date, note?: string }
 
-    // Current question state
+    // Question state
     let expectedAnswer = 0;
-    let currentQuestionText = "";
-    let triesThisQuestion = 0; // max 3
+    let equationText = '';
+    let triesThisQuestion = 0;
 
-    // Mix mode alternation
+    // Input state
+    let answerDigits = '';
+
+    // Mode state
+    let mode = 'add'; // 'add' | 'sub' | 'mix'
     let isNextMixAdd = true; // + - + - pattern
 
     const HEARTS_PER_DOLLAR = 10;
     const MAX_TRIES = 3;
+
+    function setMode(newMode) {
+      mode = newMode;
+      document.getElementById('mode-plus').classList.toggle('active', mode === 'add');
+      document.getElementById('mode-minus').classList.toggle('active', mode === 'sub');
+      document.getElementById('mode-both').classList.toggle('active', mode === 'mix');
+      generateQuestion();
+    }
 
     function getHourKey(d) {
       return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}`;
@@ -268,7 +525,6 @@
       const currentKey = getHourKey(now);
       if (pendingHourKey === null) pendingHourKey = currentKey;
 
-      // If hour changes, release last hour's pending into available + write one deposit tx
       if (currentKey !== pendingHourKey) {
         if (pendingDollarsThisHour > 0) {
           money += pendingDollarsThisHour;
@@ -288,8 +544,7 @@
       document.getElementById('pending-display').innerText = String(pendingDollarsThisHour);
 
       const heartsEl = document.getElementById('hearts');
-      heartsEl.innerHTML = "";
-
+      heartsEl.innerHTML = '';
       for (let i = 0; i < HEARTS_PER_DOLLAR; i++) {
         const span = document.createElement('span');
         span.className = 'heart';
@@ -303,31 +558,58 @@
     }
 
     function generateQuestion() {
-      triesThisQuestion = 0; // reset tries for the new question
+      triesThisQuestion = 0;
+      answerDigits = '';
+      renderAnswerLine();
 
       const [min, max] = ranges[tierIndex];
       let num1 = randInt(min, max);
       let num2 = randInt(min, max);
 
-      const mode = document.getElementById('mode-select').value;
-      let currentOp = mode;
-
+      let op = mode;
       if (mode === 'mix') {
-        currentOp = isNextMixAdd ? 'add' : 'sub';
+        op = isNextMixAdd ? 'add' : 'sub';
         isNextMixAdd = !isNextMixAdd;
       }
 
-      if (currentOp === 'sub') {
+      if (op === 'sub') {
         if (num1 < num2) [num1, num2] = [num2, num1];
         expectedAnswer = num1 - num2;
-        currentQuestionText = `${num1} - ${num2} = ?`;
+        equationText = `${num1} − ${num2} =`;
       } else {
         expectedAnswer = num1 + num2;
-        currentQuestionText = `${num1} + ${num2} = ?`;
+        equationText = `${num1} + ${num2} =`;
       }
 
-      document.getElementById('question-text').innerText = currentQuestionText;
-      document.getElementById('feedback-text').innerText = "";
+      document.getElementById('equation-text').innerText = equationText;
+      setFeedback('');
+    }
+
+    function setFeedback(text, color) {
+      const el = document.getElementById('feedback-text');
+      el.innerText = text;
+      el.style.color = color || '#111';
+    }
+
+    function renderAnswerLine() {
+      const el = document.getElementById('answer-text');
+      el.innerText = answerDigits.length ? answerDigits : ' ';
+    }
+
+    function pressDigit(d) {
+      // cap length to keep it tidy on screen
+      if (answerDigits.length >= 4) return;
+      // no leading zeros unless it's just "0"
+      if (answerDigits === '0') answerDigits = '';
+      answerDigits += String(d);
+      renderAnswerLine();
+      setFeedback('');
+    }
+
+    function clearAnswer() {
+      answerDigits = '';
+      renderAnswerLine();
+      setFeedback('');
     }
 
     function awardHeart() {
@@ -336,134 +618,10 @@
       if (heartsFilled >= HEARTS_PER_DOLLAR) {
         heartsFilled = 0;
         pendingDollarsThisHour += 1;
-
-        const feedback = document.getElementById('feedback-text');
-        feedback.innerText = "Correct! $1 is pending ⏳";
-        feedback.style.color = "green";
+        setFeedback('Correct! $1 is pending ⏳', 'green');
       }
 
       renderTopBar();
-    }
-
-    function recordDeposit(amount, atOverride) {
-      const at = atOverride ? new Date(atOverride) : new Date();
-      const hourKey = getHourKey(at);
-
-      // One deposit line per hour (aggregate if multiple releases somehow happen same hour)
-      let idx = -1;
-      for (let i = 0; i < transactions.length; i++) {
-        const tx = transactions[i];
-        if (tx.type === 'deposit' && getHourKey(tx.at) === hourKey) {
-          idx = i;
-          break;
-        }
-      }
-
-      if (idx >= 0) {
-        const tx = transactions[idx];
-        tx.amount += amount;
-        tx.at = at;
-        transactions.splice(idx, 1);
-        transactions.unshift(tx);
-      } else {
-        transactions.unshift({ type: 'deposit', amount, at });
-      }
-
-      if (transactions.length > 5000) transactions.length = 5000;
-
-      const bankPage = document.getElementById('bank-page');
-      if (bankPage && bankPage.style.display === 'block') {
-        renderBank();
-      }
-    }
-
-    // Placeholder for future store purchases
-    function recordDeduction(amount, note) {
-      const now = new Date();
-      transactions.unshift({ type: 'deduction', amount, at: now, note });
-      if (transactions.length > 5000) transactions.length = 5000;
-
-      const bankPage = document.getElementById('bank-page');
-      if (bankPage && bankPage.style.display === 'block') {
-        renderBank();
-      }
-    }
-
-    function dollars(n) {
-      return `$${Number(n).toFixed(0)}`;
-    }
-
-    function formatTime(d) {
-      return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    }
-
-    function formatDate(d) {
-      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    }
-
-    let showAllTransactions = false;
-
-    function toggleTxView() {
-      showAllTransactions = !showAllTransactions;
-      const btn = document.getElementById('tx-toggle');
-      const sub = document.getElementById('tx-subtitle');
-      btn.innerText = showAllTransactions ? 'View Recent' : 'View All';
-      sub.innerText = showAllTransactions ? 'Showing all transactions.' : 'Showing 10 most recent.';
-      renderBank();
-    }
-
-    // --- ROOM INTERACTIONS ---
-    function setupRoom() {
-      const hitbox = document.getElementById('closet-hitbox');
-      const overlay = document.getElementById('closet-overlay');
-      if (!hitbox || !overlay) return;
-
-      const openCloset = () => {
-        overlay.style.display = 'block';
-      };
-
-      const closeCloset = () => {
-        overlay.style.display = 'none';
-      };
-
-      hitbox.addEventListener('click', openCloset);
-      overlay.addEventListener('click', closeCloset);
-
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeCloset();
-      });
-    }
-
-    function renderBank() {
-      renderTopBar();
-      const listEl = document.getElementById('tx-list');
-
-      if (transactions.length === 0) {
-        listEl.innerText = "No transactions yet — earn $1 by filling the hearts!";
-        return;
-      }
-
-      const ul = document.createElement('ul');
-      const max = showAllTransactions ? transactions.length : Math.min(10, transactions.length);
-
-      for (let i = 0; i < max; i++) {
-        const tx = transactions[i];
-        const li = document.createElement('li');
-
-        const isDeposit = tx.type === 'deposit';
-        li.style.color = isDeposit ? 'green' : 'red';
-        li.style.fontWeight = '700';
-
-        const sign = isDeposit ? '+' : '-';
-        const label = isDeposit ? 'Deposit' : (tx.note ? tx.note : 'Purchase');
-        const when = `${formatDate(tx.at)} • ${formatTime(tx.at)}`;
-
-        li.textContent = `${sign}${dollars(tx.amount)} — ${label} — ${when}`;
-        ul.appendChild(li);
-      }
-
-      listEl.innerHTML = "";
-      listEl.appendChild(ul);
     }
 
     function levelUpIfNeeded() {
@@ -480,96 +638,142 @@
       }
     }
 
-    function checkAnswer() {
-      const inputEl = document.getElementById('answer-input');
-      const raw = inputEl.value;
-      const feedback = document.getElementById('feedback-text');
-
+    function submitAnswer() {
       // Blank input message (no penalty)
-      if (raw.trim() === "") {
-        feedback.innerText = "I don’t see your answer. Is it hiding?";
-        feedback.style.color = "orange";
+      if (answerDigits.trim() === '') {
+        setFeedback('I don’t see your answer. Is it hiding?', 'orange');
         return;
       }
 
-      const userAnswer = parseInt(raw, 10);
+      const userAnswer = parseInt(answerDigits, 10);
 
       if (userAnswer === expectedAnswer) {
-        // Correct
         triesThisQuestion = 0;
         rightStreak++;
         wrongStreak = 0;
 
         awardHeart();
-
-        // If awardHeart didn't overwrite feedback, show a simple one
-        if (feedback.innerText === "") {
-          feedback.innerText = "Correct!";
-          feedback.style.color = "green";
+        if (document.getElementById('feedback-text').innerText === '') {
+          setFeedback('Correct!', 'green');
         }
 
         levelUpIfNeeded();
-
-        inputEl.value = "";
         generateQuestion();
-        inputEl.focus();
         return;
       }
 
       // Wrong
       triesThisQuestion++;
 
-      // Max retries: 3, supportive message on 3rd miss
       if (triesThisQuestion < MAX_TRIES) {
-        feedback.innerText = "Oops! Try again 💛";
-        feedback.style.color = "red";
-        inputEl.select();
-        return; // keep SAME question
+        setFeedback('Oops! Try again 💛', 'red');
+        return; // keep same question + keep answer (kid can edit with Clear)
       }
 
-      // Third miss
-      feedback.innerText = "We’ll come back to this — you’re close though!";
-      feedback.style.color = "#8a2be2";
-
-      // This counts as a "failed question" for adaptive tier-down logic
+      setFeedback('We’ll come back to this — you’re close though!', '#8a2be2');
       wrongStreak++;
       rightStreak = 0;
       levelDownIfNeeded();
-
-      // Move on to a new question
-      inputEl.value = "";
       generateQuestion();
-      inputEl.focus();
     }
 
-    // Enter submits
-    document.getElementById('answer-input').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') checkAnswer();
-    });
+    // ===== BANK =====
+    let showAllTransactions = false;
 
-    // --- Tiny self-tests (run once in console; doesn't change UI) ---
-    function runSelfTests() {
-      try {
-        const k = getHourKey(new Date(2026, 0, 2, 13, 45, 0));
-        console.assert(typeof k === 'string' && k.includes('-'), 'getHourKey should return a string key');
+    function toggleTxView() {
+      showAllTransactions = !showAllTransactions;
+      const btn = document.getElementById('tx-toggle');
+      const sub = document.getElementById('tx-subtitle');
+      btn.innerText = showAllTransactions ? 'View Recent' : 'View All';
+      sub.innerText = showAllTransactions ? 'Showing all transactions.' : 'Showing 10 most recent.';
+      renderBank();
+    }
 
-        // subtraction safety test
-        const a = 3, b = 9;
-        const num1 = Math.max(a, b);
-        const num2 = Math.min(a, b);
-        console.assert((num1 - num2) >= 0, 'Subtraction should not produce negatives');
-      } catch (err) {
-        console.error('Self-tests failed:', err);
+    function recordDeposit(amount, atOverride) {
+      const at = atOverride ? new Date(atOverride) : new Date();
+      const hourKey = getHourKey(at);
+
+      let idx = -1;
+      for (let i = 0; i < transactions.length; i++) {
+        const tx = transactions[i];
+        if (tx.type === 'deposit' && getHourKey(tx.at) === hourKey) { idx = i; break; }
+      }
+
+      if (idx >= 0) {
+        const tx = transactions[idx];
+        tx.amount += amount;
+        tx.at = at;
+        transactions.splice(idx, 1);
+        transactions.unshift(tx);
+      } else {
+        transactions.unshift({ type: 'deposit', amount, at });
+      }
+
+      if (transactions.length > 5000) transactions.length = 5000;
+      if (document.getElementById('bank-page').classList.contains('active')) renderBank();
+    }
+
+    function dollars(n) {
+      return `$${Number(n).toFixed(0)}`;
+    }
+
+    function formatTime(d) {
+      return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function formatDate(d) {
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+
+    function renderBank() {
+      renderTopBar();
+      const listEl = document.getElementById('tx-list');
+      listEl.innerHTML = '';
+
+      if (transactions.length === 0) {
+        const li = document.createElement('li');
+        li.style.opacity = '0.9';
+        li.innerText = 'No transactions yet — earn $1 by filling the hearts!';
+        listEl.appendChild(li);
+        return;
+      }
+
+      const max = showAllTransactions ? transactions.length : Math.min(10, transactions.length);
+      for (let i = 0; i < max; i++) {
+        const tx = transactions[i];
+        const li = document.createElement('li');
+        const isDeposit = tx.type === 'deposit';
+        li.style.color = isDeposit ? '#6bff8a' : '#ff6b6b';
+
+        const sign = isDeposit ? '+' : '-';
+        const label = isDeposit ? 'Deposit' : (tx.note ? tx.note : 'Purchase');
+        const when = `${formatDate(tx.at)} • ${formatTime(tx.at)}`;
+        li.textContent = `${sign}${dollars(tx.amount)} — ${label} — ${when}`;
+        listEl.appendChild(li);
       }
     }
 
-    // Init
+    // ===== ROOM =====
+    function setupRoom() {
+      const hitbox = document.getElementById('closet-hitbox');
+      const overlay = document.getElementById('closet-overlay');
+      if (!hitbox || !overlay) return;
+
+      const openCloset = () => { overlay.style.display = 'block'; };
+      const closeCloset = () => { overlay.style.display = 'none'; };
+
+      hitbox.addEventListener('click', openCloset);
+      overlay.addEventListener('click', closeCloset);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCloset(); });
+    }
+
+    // ===== INIT =====
     setupRoom();
     pendingHourKey = getHourKey(new Date());
     renderTopBar();
-    generateQuestion();
-    document.getElementById('answer-input').focus();
-    runSelfTests();
+    setMode('add');
   </script>
 </body>
 </html>
+
+
