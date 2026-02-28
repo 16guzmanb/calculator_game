@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cutesy Calculator Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Bubblegum Sans', cursive;
+      padding: 16px;
+      background: #fffafc;
+    }
+
+    h1, h2, h3, button, input, select, label, p, div {
+      font-family: 'Bubblegum Sans', cursive;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 10;
+    }
+
+    .hearts {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      line-height: 1;
+      user-select: none;
+    }
+
+    .heart { font-size: 18px; }
+
+    .bank {
+      font-weight: 700;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .nav-btn { margin-right: 10px; padding: 6px 10px; cursor: pointer; }
+    .page { display: none; margin-top: 12px; border: 1px solid #ccc; padding: 16px; border-radius: 10px; }
+    #game-page { display: block; }
+
+    #question-text { margin: 16px 0; }
+
+    #answer-input { font-size: 18px; padding: 6px 8px; width: 140px; }
+    button { padding: 6px 10px; }
+
+    #feedback-text { margin-top: 12px; font-weight: 600; min-height: 1.2em; }
+
+    .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .tiny { font-size: 12px; opacity: 0.75; }
+
+    /* --- ROOM LAYERS --- */
+    .room-stage {
+      position: relative;
+      width: min(520px, 100%);
+      aspect-ratio: 170 / 107;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fff;
+      image-rendering: pixelated;
+    }
+
+    .room-stage img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: pixelated;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    #room-bg { z-index: 1; }
+    .character-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .items-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .closet-hitbox {
+      position: absolute;
+      z-index: 4;
+      left: 0%;
+      top: 10%;
+      width: 22%;
+      height: 78%;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .closet-hitbox:focus-visible {
+      outline: 2px dashed #ff69b4;
+      outline-offset: 2px;
+    }
+
+    #closet-overlay {
+      z-index: 10;
+      display: none;
+      cursor: pointer;
+    }
+
+    ul { margin: 10px 0 0; padding-left: 18px; }
+    li { margin: 6px 0; }
+  </style>
+</head>
+<body>
+
+  <!-- Persistent top bar (visible on all pages) -->
+  <div class="topbar">
+    <div>
+      <div class="hearts" id="hearts"></div>
+      <div class="tiny" id="hearts-hint">Get 10 hearts → +$1</div>
+    </div>
+    <div class="bank">
+      <div>Available: $<span id="money-display">0</span></div>
+      <div class="tiny">Pending: $<span id="pending-display">0</span></div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="row">
+    <button class="nav-btn" onclick="showPage('game-page')">Calculator</button>
+    <button class="nav-btn" onclick="showPage('bank-page')">Bank</button>
+    <button class="nav-btn" onclick="showPage('store-page')">Store</button>
+    <button class="nav-btn" onclick="showPage('room-page')">Room</button>
+  </div>
+
+  <!-- Pages -->
+  <div id="game-page" class="page">
+    <h2>Calculator Game</h2>
+
+    <div class="row">
+      <label for="mode-select">Mode:</label>
+      <select id="mode-select" onchange="generateQuestion()">
+        <option value="add">Addition Only</option>
+        <option value="sub">Subtraction Only</option>
+        <option value="mix">50/50 Mix (+ - + -)</option>
+      </select>
+    </div>
+
+    <h1 id="question-text">? + ? = ?</h1>
+
+    <div class="row">
+      <input type="number" id="answer-input" placeholder="Answer" />
+      <button onclick="checkAnswer()">Submit</button>
+    </div>
+
+    <p id="feedback-text"></p>
+  </div>
+
+  <div id="bank-page" class="page">
+    <h2>The Bank</h2>
+    <p class="tiny">(No saving yet — refreshing resets the bank for now.)</p>
+
+    <div class="row" style="justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0;">Transactions</h3>
+      <button id="tx-toggle" onclick="toggleTxView()">View All</button>
+    </div>
+    <div class="tiny" id="tx-subtitle">Showing 10 most recent.</div>
+    <div id="tx-list">No transactions yet — earn $1 by filling the hearts!</div>
+  </div>
+
+  <div id="store-page" class="page">
+    <h2>The Store</h2>
+    <p><strong>Coming soon.</strong></p>
+    <p class="tiny">(Later: pixel items, prices, buy button.)</p>
+  </div>
+
+  <div id="room-page" class="page">
+    <h2>My Room</h2>
+
+    <div class="room-stage" id="room-stage">
+      <!-- Layer 1: Room background -->
+      <img id="room-bg" src="room_ui.png" alt="Room background" />
+
+      <!-- Layer 2: Character (you'll add later) -->
+      <div class="character-layer" id="character-layer" aria-hidden="true"></div>
+
+      <!-- Layer 3: Equipped items (posters, furniture, etc.) -->
+      <div class="items-layer" id="items-layer" aria-hidden="true"></div>
+
+      <!-- Clickable closet door area -->
+      <button class="closet-hitbox" id="closet-hitbox" type="button" aria-label="Open closet"></button>
+
+      <!-- Closet open overlay (full image overlay) -->
+      <img id="closet-overlay" src="closet_open.png" alt="Closet open" />
+    </div>
+
+    <p class="tiny">Click the pink closet door to open it. (Later it will show purchased items.)</p>
+  </div>
+
+  <script>
+    // --- PAGE SWITCHING LOGIC ---
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(page => page.style.display = 'none');
+      document.getElementById(pageId).style.display = 'block';
+
+      // keep topbar + hourly release up to date
+      renderTopBar();
+
+      if (pageId === 'bank-page') {
+        renderBank();
+      }
+    }
+
+    // --- GAME LOGIC ---
+    // Ranges are internal only (not shown to user)
+    const ranges = [[0,5], [6,10], [11,20], [21,40], [41,59], [60,70], [71,81], [82,92], [93,100]];
+
+    let tierIndex = 0;
+    let rightStreak = 0;
+    let wrongStreak = 0;
+
+    // Economy
+    let money = 0; // available balance
+    let heartsFilled = 0; // 0..10
+
+    // Pending dollars earned this clock hour (released at top of next hour)
+    let pendingDollarsThisHour = 0;
+    let pendingHourKey = null;
+
+    // Bank log (in-memory for now; we'll add saving later)
+    let transactions = []; // { type: 'deposit'|'deduction', amount: number, at: Date, note?: string }
+
+    // Current question state
+    let expectedAnswer = 0;
+    let currentQuestionText = "";
+    let triesThisQuestion = 0; // max 3
+
+    // Mix mode alternation
+    let isNextMixAdd = true; // + - + - pattern
+
+    const HEARTS_PER_DOLLAR = 10;
+    const MAX_TRIES = 3;
+
+    function getHourKey(d) {
+      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}`;
+    }
+
+    function maybeReleasePending() {
+      const now = new Date();
+      const currentKey = getHourKey(now);
+      if (pendingHourKey === null) pendingHourKey = currentKey;
+
+      // If hour changes, release last hour's pending into available + write one deposit tx
+      if (currentKey !== pendingHourKey) {
+        if (pendingDollarsThisHour > 0) {
+          money += pendingDollarsThisHour;
+          const releaseTime = new Date(now);
+          releaseTime.setMinutes(0, 0, 0);
+          recordDeposit(pendingDollarsThisHour, releaseTime);
+          pendingDollarsThisHour = 0;
+        }
+        pendingHourKey = currentKey;
+      }
+    }
+
+    function renderTopBar() {
+      maybeReleasePending();
+
+      document.getElementById('money-display').innerText = String(money);
+      document.getElementById('pending-display').innerText = String(pendingDollarsThisHour);
+
+      const heartsEl = document.getElementById('hearts');
+      heartsEl.innerHTML = "";
+
+      for (let i = 0; i < HEARTS_PER_DOLLAR; i++) {
+        const span = document.createElement('span');
+        span.className = 'heart';
+        span.textContent = i < heartsFilled ? '❤️' : '🤍';
+        heartsEl.appendChild(span);
+      }
+    }
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function generateQuestion() {
+      triesThisQuestion = 0; // reset tries for the new question
+
+      const [min, max] = ranges[tierIndex];
+      let num1 = randInt(min, max);
+      let num2 = randInt(min, max);
+
+      const mode = document.getElementById('mode-select').value;
+      let currentOp = mode;
+
+      if (mode === 'mix') {
+        currentOp = isNextMixAdd ? 'add' : 'sub';
+        isNextMixAdd = !isNextMixAdd;
+      }
+
+      if (currentOp === 'sub') {
+        if (num1 < num2) [num1, num2] = [num2, num1];
+        expectedAnswer = num1 - num2;
+        currentQuestionText = `${num1} - ${num2} = ?`;
+      } else {
+        expectedAnswer = num1 + num2;
+        currentQuestionText = `${num1} + ${num2} = ?`;
+      }
+
+      document.getElementById('question-text').innerText = currentQuestionText;
+      document.getElementById('feedback-text').innerText = "";
+    }
+
+    function awardHeart() {
+      heartsFilled++;
+
+      if (heartsFilled >= HEARTS_PER_DOLLAR) {
+        heartsFilled = 0;
+        pendingDollarsThisHour += 1;
+
+        const feedback = document.getElementById('feedback-text');
+        feedback.innerText = "Correct! $1 is pending ⏳";
+        feedback.style.color = "green";
+      }
+
+      renderTopBar();
+    }
+
+    function recordDeposit(amount, atOverride) {
+      const at = atOverride ? new Date(atOverride) : new Date();
+      const hourKey = getHourKey(at);
+
+      // One deposit line per hour (aggregate if multiple releases somehow happen same hour)
+      let idx = -1;
+      for (let i = 0; i < transactions.length; i++) {
+        const tx = transactions[i];
+        if (tx.type === 'deposit' && getHourKey(tx.at) === hourKey) {
+          idx = i;
+          break;
+        }
+      }
+
+      if (idx >= 0) {
+        const tx = transactions[idx];
+        tx.amount += amount;
+        tx.at = at;
+        transactions.splice(idx, 1);
+        transactions.unshift(tx);
+      } else {
+        transactions.unshift({ type: 'deposit', amount, at });
+      }
+
+      if (transactions.length > 5000) transactions.length = 5000;
+
+      const bankPage = document.getElementById('bank-page');
+      if (bankPage && bankPage.style.display === 'block') {
+        renderBank();
+      }
+    }
+
+    // Placeholder for future store purchases
+    function recordDeduction(amount, note) {
+      const now = new Date();
+      transactions.unshift({ type: 'deduction', amount, at: now, note });
+      if (transactions.length > 5000) transactions.length = 5000;
+
+      const bankPage = document.getElementById('bank-page');
+      if (bankPage && bankPage.style.display === 'block') {
+        renderBank();
+      }
+    }
+
+    function dollars(n) {
+      return `$${Number(n).toFixed(0)}`;
+    }
+
+    function formatTime(d) {
+      return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function formatDate(d) {
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+
+    let showAllTransactions = false;
+
+    function toggleTxView() {
+      showAllTransactions = !showAllTransactions;
+      const btn = document.getElementById('tx-toggle');
+      const sub = document.getElementById('tx-subtitle');
+      btn.innerText = showAllTransactions ? 'View Recent' : 'View All';
+      sub.innerText = showAllTransactions ? 'Showing all transactions.' : 'Showing 10 most recent.';
+      renderBank();
+    }
+
+    // --- ROOM INTERACTIONS ---
+    function setupRoom() {
+      const hitbox = document.getElementById('closet-hitbox');
+      const overlay = document.getElementById('closet-overlay');
+      if (!hitbox || !overlay) return;
+
+      const openCloset = () => {
+        overlay.style.display = 'block';
+      };
+
+      const closeCloset = () => {
+        overlay.style.display = 'none';
+      };
+
+      hitbox.addEventListener('click', openCloset);
+      overlay.addEventListener('click', closeCloset);
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeCloset();
+      });
+    }
+
+    function renderBank() {
+      renderTopBar();
+      const listEl = document.getElementById('tx-list');
+
+      if (transactions.length === 0) {
+        listEl.innerText = "No transactions yet — earn $1 by filling the hearts!";
+        return;
+      }
+
+      const ul = document.createElement('ul');
+      const max = showAllTransactions ? transactions.length : Math.min(10, transactions.length);
+
+      for (let i = 0; i < max; i++) {
+        const tx = transactions[i];
+        const li = document.createElement('li');
+
+        const isDeposit = tx.type === 'deposit';
+        li.style.color = isDeposit ? 'green' : 'red';
+        li.style.fontWeight = '700';
+
+        const sign = isDeposit ? '+' : '-';
+        const label = isDeposit ? 'Deposit' : (tx.note ? tx.note : 'Purchase');
+        const when = `${formatDate(tx.at)} • ${formatTime(tx.at)}`;
+
+        li.textContent = `${sign}${dollars(tx.amount)} — ${label} — ${when}`;
+        ul.appendChild(li);
+      }
+
+      listEl.innerHTML = "";
+      listEl.appendChild(ul);
+    }
+
+    function levelUpIfNeeded() {
+      if (rightStreak >= 5 && tierIndex < ranges.length - 1) {
+        tierIndex++;
+        rightStreak = 0;
+      }
+    }
+
+    function levelDownIfNeeded() {
+      if (wrongStreak >= 3 && tierIndex > 0) {
+        tierIndex--;
+        wrongStreak = 0;
+      }
+    }
+
+    function checkAnswer() {
+      const inputEl = document.getElementById('answer-input');
+      const raw = inputEl.value;
+      const feedback = document.getElementById('feedback-text');
+
+      // Blank input message (no penalty)
+      if (raw.trim() === "") {
+        feedback.innerText = "I don’t see your answer. Is it hiding?";
+        feedback.style.color = "orange";
+        return;
+      }
+
+      const userAnswer = parseInt(raw, 10);
+
+      if (userAnswer === expectedAnswer) {
+        // Correct
+        triesThisQuestion = 0;
+        rightStreak++;
+        wrongStreak = 0;
+
+        awardHeart();
+
+        // If awardHeart didn't overwrite feedback, show a simple one
+        if (feedback.innerText === "") {
+          feedback.innerText = "Correct!";
+          feedback.style.color = "green";
+        }
+
+        levelUpIfNeeded();
+
+        inputEl.value = "";
+        generateQuestion();
+        inputEl.focus();
+        return;
+      }
+
+      // Wrong
+      triesThisQuestion++;
+
+      // Max retries: 3, supportive message on 3rd miss
+      if (triesThisQuestion < MAX_TRIES) {
+        feedback.innerText = "Oops! Try again 💛";
+        feedback.style.color = "red";
+        inputEl.select();
+        return; // keep SAME question
+      }
+
+      // Third miss
+      feedback.innerText = "We’ll come back to this — you’re close though!";
+      feedback.style.color = "#8a2be2";
+
+      // This counts as a "failed question" for adaptive tier-down logic
+      wrongStreak++;
+      rightStreak = 0;
+      levelDownIfNeeded();
+
+      // Move on to a new question
+      inputEl.value = "";
+      generateQuestion();
+      inputEl.focus();
+    }
+
+    // Enter submits
+    document.getElementById('answer-input').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkAnswer();
+    });
+
+    // --- Tiny self-tests (run once in console; doesn't change UI) ---
+    function runSelfTests() {
+      try {
+        const k = getHourKey(new Date(2026, 0, 2, 13, 45, 0));
+        console.assert(typeof k === 'string' && k.includes('-'), 'getHourKey should return a string key');
+
+        // subtraction safety test
+        const a = 3, b = 9;
+        const num1 = Math.max(a, b);
+        const num2 = Math.min(a, b);
+        console.assert((num1 - num2) >= 0, 'Subtraction should not produce negatives');
+      } catch (err) {
+        console.error('Self-tests failed:', err);
+      }
+    }
+
+    // Init
+    setupRoom();
+    pendingHourKey = getHourKey(new Date());
+    renderTopBar();
+    generateQuestion();
+    document.getElementById('answer-input').focus();
+    runSelfTests();
+  </script>
+</body>
+</html>
