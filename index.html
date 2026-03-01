@@ -312,6 +312,33 @@
       image-rendering: pixelated;
     }
 
+    /* Room character container sits above the room background */
+#character-layer{
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Every character PNG uses the same exact box + anchor as the room bg */
+#character-layer .char-img{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: right bottom;
+  image-rendering: pixelated;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Explicit stacking (cannot get “mixed up”) */
+#character-layer .char-hair  { z-index: 10; } /* behind */
+#character-layer .char-body  { z-index: 20; }
+#character-layer .char-eyes  { z-index: 30; }
+#character-layer .char-smile { z-index: 40; }
+
     .room-stage img {
       position: absolute;
       right: 0;          /* stick to right */
@@ -327,6 +354,8 @@
       user-select: none;
       -webkit-user-drag: none;
     }
+
+
 
     #room-bg { z-index: 1; }
     .character-layer {
@@ -453,7 +482,12 @@
             <h2>My Room</h2>
             <div class="room-stage" id="room-stage">
               <img id="room-bg" src="room_ui.png" alt="Room background" />
-              <div class="character-layer" id="character-layer" aria-hidden="true"></div>
+            <div class="character-layer" id="character-layer" aria-hidden="true">
+              <img class="char-img char-hair" src="base_hair.png" alt="" />
+              <img class="char-img char-body" src="body-and-base-outfit.png" alt="" />
+              <img class="char-img char-eyes" src="base_eye.png" alt="" />
+              <img class="char-img char-smile" src="base_smile.png" alt="" />
+            </div>
               <div class="items-layer" id="items-layer" aria-hidden="true"></div>
               <button class="closet-hitbox" id="closet-hitbox" type="button" aria-label="Open closet"></button>
               <img id="closet-overlay" src="closet_open.png" alt="Closet open" />
