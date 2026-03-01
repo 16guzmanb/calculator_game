@@ -56,6 +56,7 @@
 
     .hearts { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; line-height: 1; user-select: none; }
     .heart  { width: 22px; height: 22px; object-fit: contain; image-rendering: pixelated; }
+    .heart.unfilled { filter: invert(1); }
     .bank   { font-weight: 700; white-space: nowrap; text-align: right; }
     .tiny   { font-size: 12px; opacity: 0.85; }
 
@@ -403,7 +404,7 @@
       </div>
       <div class="bank">
         <div>Available: $<span id="money-display">0</span></div>
-        <div class="tiny">Pending: $<span id="pending-display">0</span></div>
+        <div style="opacity:0.6;">Pending: $<span id="pending-display">0</span></div>
       </div>
     </div>
 
@@ -539,12 +540,12 @@
     ];
 
     const KEYCHAIN_ITEMS = [
-      { id:'rain_keychain',       name:'Rain Keychain',       icon:'rain_icon.png',       src:'rain_keychain.png'      },
-      { id:'star_keychain',       name:'Star Keychain',       icon:'star_icon.png',       src:'star_keychain.png'      },
-      { id:'heart_keychain',      name:'Heart Keychain',      icon:'heart_icon.png',      src:'heart_keychain.png'     },
-      { id:'butterfly_keychain',  name:'Butterfly Keychain',  icon:'butterfly_icon.png',  src:'butterfly_keychain.png' },
-      { id:'flower_keychain',     name:'Flower Keychain',     icon:'flower_icon.png',     src:'flower_keychain.png'    },
-      { id:'moon_keychain',       name:'Moon Keychain',       icon:'moon_icon.png',       src:'moon_keychain.png'      },
+      { id:'rain_keychain',   name:'Rain',   icon:'rain_keychain.png',   src:'rain_keychain.png'   },
+      { id:'check_keychain',  name:'Check',  icon:'check_keychain.png',  src:'check_keychain.png'  },
+      { id:'spunk_keychain',  name:'Spunk',  icon:'spunk_keychain.png',  src:'spunk_keychain.png'  },
+      { id:'punk_keychain',   name:'Punk',   icon:'punk_keychain.png',   src:'punk_keychain.png'   },
+      { id:'jillee_keychain', name:'Jillee', icon:'jillee_keychain.png', src:'jillee_keychain.png' },
+      { id:'mira_keychain',   name:'Mira',   icon:'mira_keychain.png',   src:'mira_keychain.png'   },
     ];
 
     function getItemDef(id) {
@@ -665,7 +666,7 @@
       el.innerHTML = '';
       for (let i = 0; i < HEARTS_PER_DOLLAR; i++) {
         const img = document.createElement("img");
-        img.className = "heart";
+        img.className = i < heartsFilled ? "heart" : "heart unfilled";
         img.src = i < heartsFilled ? "filled_heart.png" : "unfilled_heart.png";
         img.alt = i < heartsFilled ? "u2665" : "u2661";
         el.appendChild(img);
