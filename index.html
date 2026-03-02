@@ -990,11 +990,19 @@
       const slot = item.slot;
       const overlay = document.getElementById(`char-${slot}-overlay`);
       if (!overlay) return;
+      const baseEl = document.getElementById(BASE_LAYER_MAP[slot]);
 
       if (equipped[slot] === itemId) {
-        equipped[slot] = null; overlay.src=''; overlay.style.display='none';
+        // Unequip — hide overlay, restore base layer
+        equipped[slot] = null;
+        overlay.src=''; overlay.style.display='none';
+        if (baseEl) baseEl.style.display='';
       } else {
-        equipped[slot] = itemId; overlay.src=item.src; overlay.style.display='';
+        // Equip — show overlay using src (NOT icon), hide base layer
+        equipped[slot] = itemId;
+        overlay.src = item.src;
+        overlay.style.display='';
+        if (baseEl) baseEl.style.display='none';
       }
       saveGame();
       renderClosetInventory();
