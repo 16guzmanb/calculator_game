@@ -444,7 +444,7 @@
               <img src="calculator_ui.png" alt="Calculator UI" />
               <!-- Character eye + animation layer (same 170x107 size, edge-to-edge) -->
               <img id="calc-eye-static" src="calc_eyes.png" alt="" class="calc-anim-layer" />
-              <video id="calc-eye-video" class="calc-anim-layer" muted playsinline style="display:none;"></video>
+              <video id="calc-eye-video" class="calc-anim-layer" muted playsinline preload="none" style="display:none;"></video>
               <div class="calc-display" aria-live="polite">
                 <div class="equation" id="equation-text">&#x2026;</div>
                 <div class="answerline" id="answer-text"> </div>
@@ -1292,6 +1292,22 @@
     let calcAnimTimer = null;
     let calcAnimFirstTimer = null;
     let calcAnimPlaying = false;
+    let calcAnimSafetyTimer = null;
+
+    function resetCalcVideo() {
+      const staticEye = document.getElementById('calc-eye-static');
+      const video     = document.getElementById('calc-eye-video');
+      if (calcAnimSafetyTimer) { clearTimeout(calcAnimSafetyTimer); calcAnimSafetyTimer = null; }
+      video.pause();
+      video.onended = null;
+      video.onerror = null;
+      video.oncanplay = null;
+      video.removeAttribute('src');
+      video.load();
+      video.style.display = 'none';
+      staticEye.style.display = '';
+      calcAnimPlaying = false;
+    }
 
     function playCalcAnimation() {
       if (calcAnimPlaying) return;
@@ -1301,31 +1317,28 @@
       const video     = document.getElementById('calc-eye-video');
       const chosen    = CALC_ANIMS[Math.floor(Math.random() * CALC_ANIMS.length)];
 
+      // Safety timeout — no matter what, reset after 8 seconds
+      calcAnimSafetyTimer = setTimeout(resetCalcVideo, 8000);
+
       video.loop = false;
       video.muted = true;
+      video.onended = resetCalcVideo;
+      video.onerror = resetCalcVideo;
+
+      video.oncanplay = function() {
+        video.oncanplay = null; // only fire once
+        staticEye.style.display = 'none';
+        video.style.display = '';
+        video.play().catch(resetCalcVideo);
+      };
+
       video.src = chosen;
       video.load();
-
-      function onDone() {
-        video.pause();
-        video.removeAttribute('src');
-        video.style.display = 'none';
-        staticEye.style.display = '';
-        calcAnimPlaying = false;
-      }
-
-      video.addEventListener('ended', onDone, { once: true });
-      video.addEventListener('error', onDone, { once: true });
-
-      video.addEventListener('canplay', () => {
-        video.style.display = '';
-        staticEye.style.display = 'none';
-        video.play().catch(onDone);
-      }, { once: true });
     }
 
     function startCalcAnimTimers() {
       stopCalcAnimTimers();
+      resetCalcVideo();
       // First animation after 10 seconds
       calcAnimFirstTimer = setTimeout(() => {
         playCalcAnimation();
@@ -1337,6 +1350,7 @@
     function stopCalcAnimTimers() {
       if (calcAnimFirstTimer) { clearTimeout(calcAnimFirstTimer); calcAnimFirstTimer = null; }
       if (calcAnimTimer) { clearInterval(calcAnimTimer); calcAnimTimer = null; }
+      if (calcAnimSafetyTimer) { clearTimeout(calcAnimSafetyTimer); calcAnimSafetyTimer = null; }
     }
 
     // ================================================================
