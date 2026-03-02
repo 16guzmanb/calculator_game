@@ -547,7 +547,7 @@
       { id:'blind_box',       name:'Blind Box',       price:10, type:'blindbox',   icon:'blind_box_icon.png',        desc:'Mystery keychain inside!',           unlimited:true,  qty:1 },
       { id:'pink_contacts',   name:'Pink Contacts',   price:5,  type:'wearable',   slot:'eyes',  icon:'pink_contacts_icon.png',   src:'pink_contacts.png',   desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'pink_lipgloss',   name:'Pink Lip Gloss',  price:5,  type:'consumable', slot:'smile', icon:'pink_lipgloss_icon.png',   src:'pink_lipgloss.png',   desc:'5 uses per bottle. Click in closet to apply.', unlimited:true,  qty:5 },
-      { id:'mini_lipgloss',   name:'Mini Lip Gloss',  price:1,  type:'consumable', slot:'smile', icon:'mini_lipgloss_icon.png',   src:'mini_lipgloss.png',   desc:'Single use. Click in closet to apply.',        unlimited:true,  qty:1 },
+      { id:'mini_lipgloss',   name:'Mini Lip Gloss',  price:1,  type:'consumable', slot:'smile', icon:'mini_lipgloss_icon.png',   src:'pink_lipgloss.png',   desc:'Single use. Click in closet to apply.',        unlimited:true,  qty:1 },
       { id:'heart_shirt',     name:'Heart Shirt',     price:5,  type:'wearable',   slot:'body',  icon:'heart_shirt_icon.png',     src:'heart_shirt.png',     desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'black_tank',      name:'Black Tank Top',  price:4,  type:'wearable',   slot:'body',  icon:'black_tank_icon.png',      src:'black_tank.png',      desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'pink_tank',       name:'Pink Tank Top',   price:4,  type:'wearable',   slot:'body',  icon:'pink_tank_icon.png',       src:'pink_tank.png',       desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
@@ -1301,27 +1301,27 @@
       const video     = document.getElementById('calc-eye-video');
       const chosen    = CALC_ANIMS[Math.floor(Math.random() * CALC_ANIMS.length)];
 
+      video.loop = false;
+      video.muted = true;
       video.src = chosen;
-      video.style.display = '';
-      staticEye.style.display = 'none';
+      video.load();
 
-      video.onended = () => {
+      function onDone() {
+        video.pause();
+        video.removeAttribute('src');
         video.style.display = 'none';
         staticEye.style.display = '';
         calcAnimPlaying = false;
-      };
+      }
 
-      video.onerror = () => {
-        video.style.display = 'none';
-        staticEye.style.display = '';
-        calcAnimPlaying = false;
-      };
+      video.addEventListener('ended', onDone, { once: true });
+      video.addEventListener('error', onDone, { once: true });
 
-      video.play().catch(() => {
-        video.style.display = 'none';
-        staticEye.style.display = '';
-        calcAnimPlaying = false;
-      });
+      video.addEventListener('canplay', () => {
+        video.style.display = '';
+        staticEye.style.display = 'none';
+        video.play().catch(onDone);
+      }, { once: true });
     }
 
     function startCalcAnimTimers() {
