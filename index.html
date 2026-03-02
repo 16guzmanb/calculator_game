@@ -497,6 +497,7 @@
         <div id="room-page" class="page" style="padding:0;">
             <div class="room-stage" id="room-stage" style="width:100%;height:100%;aspect-ratio:unset;border-radius:0;border:none;margin:0;">
               <img id="room-bg" src="room_ui.png" alt="Room background" />
+              <img id="room-paint-overlay" src="" alt="" style="display:none; position:absolute; inset:0; width:100%; height:100%; object-fit:contain; image-rendering:pixelated; z-index:2; pointer-events:none;" />
 
               <div class="character-layer" id="character-layer" aria-hidden="true">
                 <img class="char-img char-hair"  src="base_hair.png" alt="" />
@@ -558,6 +559,11 @@
       { id:'black_shorts',    name:'Black Shorts',    price:4,  type:'wearable',   slot:'legs',  icon:'black_shorts_icon.png',    src:'black_shorts.png',    desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'bluejeans',       name:'Blue Jeans',      price:5,  type:'wearable',   slot:'legs',  icon:'bluejeans_icon.png',       src:'bluejeans.png',       desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'pink_shoes',      name:'Pink Shoes',      price:1,  type:'wearable',   slot:'shoes', icon:'pink_shoes_icon.png',      src:'pink_shoes.png',      desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
+      { id:'paint_can',          name:'Paint Can',         price:0, type:'paintbox',  icon:'paintcan_icon.png',          desc:'Mystery room paint inside!',          unlimited:true, qty:1 },
+      { id:'poster_1', name:'Poster 1', price:0, type:'poster', icon:'poster_1.png', src:'poster_1.png', desc:'Place in your room!', unlimited:false, qty:1 },
+      { id:'poster_2', name:'Poster 2', price:0, type:'poster', icon:'poster_2.png', src:'poster_2.png', desc:'Place in your room!', unlimited:false, qty:1 },
+      { id:'poster_3', name:'Poster 3', price:0, type:'poster', icon:'poster_3.png', src:'poster_3.png', desc:'Place in your room!', unlimited:false, qty:1 },
+      { id:'poster_4', name:'Poster 4', price:0, type:'poster', icon:'poster_4.png', src:'poster_4.png', desc:'Place in your room!', unlimited:false, qty:1 },
     ];
 
     const KEYCHAIN_ITEMS = [
@@ -569,8 +575,15 @@
       { id:'mira_keychain',   name:'Mira',   icon:'mira_keychain.png',   src:'mira_keychain.png'   },
     ];
 
+    const PAINT_ITEMS = [
+      { id:'purple_paint',      name:'Purple Paint',  icon:'paintcan_icon.png', src:'purple_paint.png'      },
+      { id:'kpop_colors_paint', name:'K-Pop Colors',  icon:'paintcan_icon.png', src:'kpop_colors_paint.png' },
+      { id:'checker_paint',     name:'Checker Paint',  icon:'paintcan_icon.png', src:'checker_paint.png'     },
+      { id:'mgk_paint_job',     name:'MGK Paint Job', icon:'paintcan_icon.png', src:'mgk_paint_job.png'     },
+    ];
+
     function getItemDef(id) {
-      return SHOP_ITEMS.find(i => i.id === id) || KEYCHAIN_ITEMS.find(i => i.id === id) || null;
+      return SHOP_ITEMS.find(i => i.id === id) || KEYCHAIN_ITEMS.find(i => i.id === id) || PAINT_ITEMS.find(i => i.id === id) || null;
     }
 
     // ================================================================
@@ -591,6 +604,7 @@
     let equipped   = { hair:null, body:null, legs:null, shoes:null, eyes:null, smile:null };
     let roomItems  = [];
     let instanceCounter = 0;
+    let activePaint = null;  // id of currently active paint overlay
 
     // ================================================================
     //  SAVE / LOAD
@@ -603,7 +617,8 @@
         localStorage.setItem(SAVE_KEY, JSON.stringify({
           money, heartsFilled, pendingDollarsThisHour, pendingHourKey,
           transactions, tierIndex, rightStreak, wrongStreak, mode,
-          inventory, ownedItems:[...ownedItems], equipped, roomItems, instanceCounter
+          inventory, ownedItems:[...ownedItems], equipped, roomItems, instanceCounter,
+          activePaint
         }));
       } catch(e) {}
     }
@@ -627,6 +642,7 @@
         equipped               = { hair:null, body:null, legs:null, shoes:null, eyes:null, smile:null, ...(d.equipped ?? {}) };
         roomItems              = d.roomItems ?? [];
         instanceCounter        = d.instanceCounter ?? 0;
+        activePaint            = d.activePaint ?? null;
       } catch(e) {}
     }
 
@@ -842,7 +858,12 @@
       const listEl = document.getElementById('shop-list');
       listEl.innerHTML = '';
       for (const item of SHOP_ITEMS) {
-        const alreadyOwned = !item.unlimited && ownedItems.has(item.id);
+        let alreadyOwned = !item.unlimited && ownedItems.has(item.id);
+        // Paint can: owned once all 4 paints are collected
+        if (item.type === 'paintbox') {
+          const allPaintsOwned = PAINT_ITEMS.every(p => ownedItems.has(p.id));
+          alreadyOwned = allPaintsOwned;
+        }
         const row = document.createElement('div');
         row.className = 'shop-item';
 
@@ -871,6 +892,8 @@
       const item = SHOP_ITEMS.find(i => i.id===itemId);
       if (!item) return;
       if (!item.unlimited && ownedItems.has(itemId)) return;
+      // Block paint can if all paints collected
+      if (item.type === 'paintbox' && PAINT_ITEMS.every(p => ownedItems.has(p.id))) return;
       if (money < item.price) return;
       money -= item.price;
       if (item.price > 0) {
@@ -910,7 +933,9 @@
 
       const wearables   = allIds.filter(id => { const d=getItemDef(id); return d&&d.type==='wearable'; });
       const consumables = allIds.filter(id => { const d=getItemDef(id); return d&&d.type==='consumable'; });
-      const blindboxes  = allIds.filter(id => { const d=getItemDef(id); return d&&d.type==='blindbox'; });
+      const blindboxes  = allIds.filter(id => { const d=getItemDef(id); return d&&(d.type==='blindbox'||d.type==='paintbox'); });
+      const paints      = PAINT_ITEMS.filter(p => ownedItems.has(p.id)).map(p => p.id);
+      const posters     = allIds.filter(id => { const d=getItemDef(id); return d&&d.type==='poster'; });
       const keychains   = allIds.filter(id => KEYCHAIN_ITEMS.some(k=>k.id===id));
 
       function section(label, ids, buildTileFn) {
@@ -969,18 +994,50 @@
         return tile;
       });
 
-      // BLIND BOXES
+      // BLIND BOXES & PAINT CANS: click to open
       section('\uD83C\uDF81 Boxes', blindboxes, id => {
         const def=getItemDef(id); if (!def) return null;
         const cnt=inventory[id]||0;
         const tile=buildTile(def,false,cnt>1?cnt:0);
         tile.title='Click to open!';
-        tile.onclick=()=>openBlindBox();
+        if (def.type==='blindbox') tile.onclick=()=>openBlindBox();
+        if (def.type==='paintbox') tile.onclick=()=>openPaintCan();
         return tile;
       });
 
       // KEYCHAINS
       section('\uD83D\uDD11 Keychains', keychains, id => {
+        const def=getItemDef(id); if (!def) return null;
+        const cnt=inventory[id]||0;
+        const tile=buildTile(def,false,cnt>1?cnt:0);
+        tile.draggable=true;
+        tile.title='Drag into the room to place!';
+        tile.addEventListener('dragstart', e=>startDragKeychain(e,id));
+        tile.addEventListener('dragend',   ()=>endDragKeychain());
+        return tile;
+      });
+
+      // PAINT: click to toggle (revealed from paint cans)
+      if (paints.length) {
+        const lbl = document.createElement('div');
+        lbl.className='closet-section-label'; lbl.innerText='\uD83C\uDFA8 Paint';
+        panel.appendChild(lbl);
+        const grid = document.createElement('div');
+        grid.className='inv-grid';
+        paints.forEach(id => {
+          const def = PAINT_ITEMS.find(p => p.id === id);
+          if (!def) return;
+          const isOn = activePaint === id;
+          const tile = buildTile(def, isOn);
+          tile.onclick = () => togglePaint(id);
+          tile.title = isOn ? 'Click to remove paint' : 'Click to paint room';
+          grid.appendChild(tile);
+        });
+        panel.appendChild(grid);
+      }
+
+      // POSTERS: drag into room (like keychains)
+      section('\uD83D\uDDBC Posters', posters, id => {
         const def=getItemDef(id); if (!def) return null;
         const cnt=inventory[id]||0;
         const tile=buildTile(def,false,cnt>1?cnt:0);
@@ -1165,7 +1222,96 @@
     }
 
     // ================================================================
-    //  ROOM ITEMS (keychains)
+    //  PAINT CAN REVEAL (sequential, like blind box but name only)
+    // ================================================================
+
+    function openPaintCan() {
+      if (!inventory['paint_can'] || inventory['paint_can'] <= 0) return;
+
+      // Find next unrevealed paint (sequential order)
+      const nextPaint = PAINT_ITEMS.find(p => !ownedItems.has(p.id));
+      if (!nextPaint) return; // all collected
+
+      inventory['paint_can']--;
+      if (inventory['paint_can'] <= 0) delete inventory['paint_can'];
+
+      const reveal   = document.getElementById('blindbox-reveal');
+      const animImg  = document.getElementById('blindbox-anim-img');
+      const nameEl   = document.getElementById('blindbox-reveal-name');
+      const closeBtn = document.getElementById('blindbox-close-btn');
+
+      // Reset
+      animImg.src = 'paintcan_icon.png';
+      animImg.className = '';
+      nameEl.className = ''; nameEl.innerText = '';
+      closeBtn.style.display = 'none';
+      reveal.classList.add('active');
+      reveal.dataset.canClose = 'false';
+
+      // Start wiggle
+      setTimeout(() => animImg.classList.add('wiggling'), 80);
+
+      // After 3s: reveal name (no icon swap), apply paint
+      setTimeout(() => {
+        animImg.classList.remove('wiggling');
+        animImg.style.display = 'none'; // hide the can image
+        nameEl.innerText = `${nextPaint.name}! \uD83C\uDFA8`;
+        setTimeout(() => nameEl.classList.add('show'), 150);
+        closeBtn.style.display = '';
+        reveal.dataset.canClose = 'true';
+
+        // Add to owned, apply paint overlay
+        ownedItems.add(nextPaint.id);
+        activePaint = nextPaint.id;
+        applyPaint();
+        saveGame();
+        renderClosetInventory();
+      }, 3000);
+    }
+
+    // Patch closeBlindboxReveal to restore animImg display
+    const _origCloseBlindbox = closeBlindboxReveal;
+    closeBlindboxReveal = function() {
+      const reveal = document.getElementById('blindbox-reveal');
+      if (reveal.dataset.canClose === 'false') return;
+      document.getElementById('blindbox-anim-img').style.display = '';
+      reveal.classList.remove('active');
+    };
+
+    // ================================================================
+    //  PAINT SYSTEM (room overlay, toggle on/off)
+    // ================================================================
+
+    function togglePaint(itemId) {
+      const item = PAINT_ITEMS.find(i => i.id === itemId);
+      if (!item) return;
+      const overlay = document.getElementById('room-paint-overlay');
+      if (!overlay) return;
+
+      if (activePaint === itemId) {
+        activePaint = null;
+        overlay.src = ''; overlay.style.display = 'none';
+      } else {
+        activePaint = itemId;
+        overlay.src = item.src; overlay.style.display = '';
+      }
+      saveGame();
+      renderClosetInventory();
+    }
+
+    function applyPaint() {
+      const overlay = document.getElementById('room-paint-overlay');
+      if (!overlay) return;
+      if (activePaint) {
+        const item = PAINT_ITEMS.find(i => i.id === activePaint);
+        if (item) { overlay.src = item.src; overlay.style.display = ''; }
+      } else {
+        overlay.src = ''; overlay.style.display = 'none';
+      }
+    }
+
+    // ================================================================
+    //  ROOM ITEMS (keychains & posters — drag from closet, drag to reposition, dblclick to return)
     // ================================================================
 
     let currentDragKeychain = null;
@@ -1221,7 +1367,7 @@
     }
 
     function renderPlacedItem(ri) {
-      const def = KEYCHAIN_ITEMS.find(k => k.id===ri.id);
+      const def = KEYCHAIN_ITEMS.find(k => k.id===ri.id) || SHOP_ITEMS.find(s => s.id===ri.id && s.type==='poster');
       if (!def) return;
       const layer = document.getElementById('items-layer');
       const img = document.createElement('img');
@@ -1289,10 +1435,10 @@
     // ================================================================
 
     const CALC_ANIMS = [
-      { src: 'Untitled_Artwork (21).png',         duration: 500  },
-      { src: 'kissy.png',        duration: 1500 },
-      { src: 'wink_tongue.png',  duration: 3000 },
-      { src: 'blink_tongue.png', duration: 2750 },
+      { src: 'wink.png',         duration: 2000 },
+      { src: 'kissy.png',        duration: 2000 },
+      { src: 'wink_tongue.png',  duration: 2000 },
+      { src: 'blink_tongue.png', duration: 2000 },
     ];
     let calcAnimTimer = null;
     let calcAnimFirstTimer = null;
@@ -1352,6 +1498,7 @@
     setMode(mode);
     applyEquipped();
     applyRoomItems();
+    applyPaint();
     startCalcAnimTimers();
 
   </script>
