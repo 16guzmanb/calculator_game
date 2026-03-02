@@ -444,7 +444,7 @@
               <img src="calculator_ui.png" alt="Calculator UI" />
               <!-- Character eye + animation layer (same 170x107 size, edge-to-edge) -->
               <img id="calc-eye-static" src="calc_eyes.png" alt="" class="calc-anim-layer" />
-              <video id="calc-eye-video" class="calc-anim-layer" muted playsinline preload="none" style="display:none;"></video>
+              <img id="calc-eye-anim" class="calc-anim-layer" style="display:none;" />
               <div class="calc-display" aria-live="polite">
                 <div class="equation" id="equation-text">&#x2026;</div>
                 <div class="answerline" id="answer-text"> </div>
@@ -1288,23 +1288,23 @@
     //  CALCULATOR EYE ANIMATIONS
     // ================================================================
 
-    const CALC_ANIMS = ['wink.mp4', 'kissy.mp4', 'wink_tongue.mp4', 'blink_tongue.mp4'];
+    const CALC_ANIMS = [
+      { src: 'wink.png',         duration: 500  },
+      { src: 'kissy.png',        duration: 1500 },
+      { src: 'wink_tongue.png',  duration: 3000 },
+      { src: 'blink_tongue.png', duration: 2750 },
+    ];
     let calcAnimTimer = null;
     let calcAnimFirstTimer = null;
     let calcAnimPlaying = false;
-    let calcAnimSafetyTimer = null;
+    let calcAnimDoneTimer = null;
 
-    function resetCalcVideo() {
+    function resetCalcAnim() {
       const staticEye = document.getElementById('calc-eye-static');
-      const video     = document.getElementById('calc-eye-video');
-      if (calcAnimSafetyTimer) { clearTimeout(calcAnimSafetyTimer); calcAnimSafetyTimer = null; }
-      video.pause();
-      video.onended = null;
-      video.onerror = null;
-      video.oncanplay = null;
-      video.removeAttribute('src');
-      video.load();
-      video.style.display = 'none';
+      const animImg   = document.getElementById('calc-eye-anim');
+      if (calcAnimDoneTimer) { clearTimeout(calcAnimDoneTimer); calcAnimDoneTimer = null; }
+      animImg.removeAttribute('src');
+      animImg.style.display = 'none';
       staticEye.style.display = '';
       calcAnimPlaying = false;
     }
@@ -1314,35 +1314,23 @@
       calcAnimPlaying = true;
 
       const staticEye = document.getElementById('calc-eye-static');
-      const video     = document.getElementById('calc-eye-video');
+      const animImg   = document.getElementById('calc-eye-anim');
       const chosen    = CALC_ANIMS[Math.floor(Math.random() * CALC_ANIMS.length)];
 
-      // Safety timeout — no matter what, reset after 8 seconds
-      calcAnimSafetyTimer = setTimeout(resetCalcVideo, 8000);
+      // Cache-bust so APNG replays from the start each time
+      animImg.src = chosen.src + '?t=' + Date.now();
+      animImg.style.display = '';
+      staticEye.style.display = 'none';
 
-      video.loop = false;
-      video.muted = true;
-      video.onended = resetCalcVideo;
-      video.onerror = resetCalcVideo;
-
-      video.oncanplay = function() {
-        video.oncanplay = null; // only fire once
-        staticEye.style.display = 'none';
-        video.style.display = '';
-        video.play().catch(resetCalcVideo);
-      };
-
-      video.src = chosen;
-      video.load();
+      // Swap back to static after the animation duration
+      calcAnimDoneTimer = setTimeout(resetCalcAnim, chosen.duration);
     }
 
     function startCalcAnimTimers() {
       stopCalcAnimTimers();
-      resetCalcVideo();
-      // First animation after 10 seconds
+      resetCalcAnim();
       calcAnimFirstTimer = setTimeout(() => {
         playCalcAnimation();
-        // Then every 5 minutes
         calcAnimTimer = setInterval(playCalcAnimation, 5 * 60 * 1000);
       }, 10 * 1000);
     }
@@ -1350,7 +1338,7 @@
     function stopCalcAnimTimers() {
       if (calcAnimFirstTimer) { clearTimeout(calcAnimFirstTimer); calcAnimFirstTimer = null; }
       if (calcAnimTimer) { clearInterval(calcAnimTimer); calcAnimTimer = null; }
-      if (calcAnimSafetyTimer) { clearTimeout(calcAnimSafetyTimer); calcAnimSafetyTimer = null; }
+      if (calcAnimDoneTimer) { clearTimeout(calcAnimDoneTimer); calcAnimDoneTimer = null; }
     }
 
     // ================================================================
