@@ -213,6 +213,7 @@
     #char-hair-overlay  { z-index: 11; }
     #char-body-overlay  { z-index: 21; }
     #char-legs-overlay  { z-index: 22; }
+    #char-shoes-overlay { z-index: 23; }
     #char-eyes-overlay  { z-index: 31; }
     #char-smile-overlay { z-index: 41; }
 
@@ -285,8 +286,8 @@
     }
     .inv-tile:hover { border-color: rgba(255,105,180,0.7); }
     .inv-tile img {
-      width: 72%; height: 72%; object-fit: contain;
-      image-rendering: pixelated; pointer-events: none;
+      max-width: 90%; max-height: 90%; width: auto; height: auto;
+      object-fit: contain; image-rendering: pixelated; pointer-events: none;
     }
     /* Darkened = equipped/applied */
     .inv-tile.equipped { filter: brightness(0.42); border-color: #ff69b4 !important; }
@@ -482,9 +483,10 @@
                 <img class="char-img char-body"  src="body-and-base-outfit.png" alt="" />
                 <img class="char-img" id="char-body-overlay"  src="" alt="" style="display:none;" />
                 <img class="char-img" id="char-legs-overlay"  src="" alt="" style="display:none;" />
-                <img class="char-img char-eyes"  src="base_eye.png" alt="" />
+                <img class="char-img" id="char-shoes-overlay" src="" alt="" style="display:none;" />
+                <img class="char-img char-eyes"  src="base_eye.png" alt="" id="char-eyes-base" />
                 <img class="char-img" id="char-eyes-overlay"  src="" alt="" style="display:none;" />
-                <img class="char-img char-smile" src="base_smile.png" alt="" />
+                <img class="char-img char-smile" src="base_smile.png" alt="" id="char-smile-base" />
                 <img class="char-img" id="char-smile-overlay" src="" alt="" style="display:none;" />
               </div>
 
@@ -527,17 +529,18 @@
     const SHOP_ITEMS = [
       { id:'blind_box',       name:'Blind Box',       price:10, type:'blindbox',   icon:'blind_box_icon.png',        desc:'Mystery keychain inside!',           unlimited:true,  qty:1 },
       { id:'pink_contacts',   name:'Pink Contacts',   price:5,  type:'wearable',   slot:'eyes',  icon:'pink_contacts_icon.png',   src:'pink_contacts.png',   desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
-      { id:'pink_lipgloss',   name:'Pink Lip Gloss',  price:5,  type:'consumable', slot:'smile', icon:'pink_lipgloss_icon.png',   src:'pink_lipgloss.png',   desc:'5 uses per bottle. Drag to apply.', unlimited:true,  qty:5 },
-      { id:'mini_lipgloss',   name:'Mini Lip Gloss',  price:1,  type:'consumable', slot:'smile', icon:'mini_lipgloss_icon.png',   src:'mini_lipgloss.png',   desc:'Single use. Drag to apply.',        unlimited:true,  qty:1 },
+      { id:'pink_lipgloss',   name:'Pink Lip Gloss',  price:5,  type:'consumable', slot:'smile', icon:'pink_lipgloss_icon.png',   src:'pink_lipgloss.png',   desc:'5 uses per bottle. Click in closet to apply.', unlimited:true,  qty:5 },
+      { id:'mini_lipgloss',   name:'Mini Lip Gloss',  price:1,  type:'consumable', slot:'smile', icon:'mini_lipgloss_icon.png',   src:'mini_lipgloss.png',   desc:'Single use. Click in closet to apply.',        unlimited:true,  qty:1 },
       { id:'heart_shirt',     name:'Heart Shirt',     price:5,  type:'wearable',   slot:'body',  icon:'heart_shirt_icon.png',     src:'heart_shirt.png',     desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'black_tank',      name:'Black Tank Top',  price:4,  type:'wearable',   slot:'body',  icon:'black_tank_icon.png',      src:'black_tank.png',      desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'pink_tank',       name:'Pink Tank Top',   price:4,  type:'wearable',   slot:'body',  icon:'pink_tank_icon.png',       src:'pink_tank.png',       desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'green_tank',      name:'Green Tank Top',  price:4,  type:'wearable',   slot:'body',  icon:'green_tank_icon.png',      src:'green_tank.png',      desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
-      { id:'pink_highlights', name:'Pink Highlights', price:5,  type:'consumable', slot:'hair',  icon:'pink_highlights_icon.png', src:'pink_highlights.png', desc:'Single use. Drag to apply.',        unlimited:true,  qty:1 },
-      { id:'pink_hair_dye',   name:'Pink Hair Dye',   price:4,  type:'consumable', slot:'hair',  icon:'pink_hair_icon.png',       src:'pink_hair.png',       desc:'Single use. Drag to apply.',        unlimited:true,  qty:1 },
-      { id:'green_hair_dye',  name:'Green Hair Dye',  price:4,  type:'consumable', slot:'hair',  icon:'green_hair_icon.png',      src:'green_hair.png',      desc:'Single use. Drag to apply.',        unlimited:true,  qty:1 },
+      { id:'pink_highlights', name:'Pink Highlights', price:5,  type:'consumable', slot:'hair',  icon:'pink_highlights_icon.png', src:'pink_highlights.png', desc:'Single use. Click in closet to apply.',        unlimited:true,  qty:1 },
+      { id:'pink_hair_dye',   name:'Pink Hair Dye',   price:4,  type:'consumable', slot:'hair',  icon:'pink_hair_icon.png',       src:'pink_hair.png',       desc:'Single use. Click in closet to apply.',        unlimited:true,  qty:1 },
+      { id:'green_hair_dye',  name:'Green Hair Dye',  price:4,  type:'consumable', slot:'hair',  icon:'green_hair_icon.png',      src:'green_hair.png',      desc:'Single use. Click in closet to apply.',        unlimited:true,  qty:1 },
       { id:'black_shorts',    name:'Black Shorts',    price:4,  type:'wearable',   slot:'legs',  icon:'black_shorts_icon.png',    src:'black_shorts.png',    desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'bluejeans',       name:'Blue Jeans',      price:5,  type:'wearable',   slot:'legs',  icon:'bluejeans_icon.png',       src:'bluejeans.png',       desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
+      { id:'pink_shoes',      name:'Pink Shoes',      price:1,  type:'wearable',   slot:'shoes', icon:'pink_shoes_icon.png',      src:'pink_shoes.png',      desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
     ];
 
     const KEYCHAIN_ITEMS = [
@@ -570,7 +573,7 @@
     // Inventory / character state (new)
     let inventory = {};         // { itemId: count }
     let ownedItems = new Set(); // ids that are one-time-owned
-    let equipped   = { hair:null, body:null, legs:null, eyes:null, smile:null };
+    let equipped   = { hair:null, body:null, legs:null, shoes:null, eyes:null, smile:null };
     let roomItems  = [];        // [{ id, instanceId, xPct, yPct }]
     let instanceCounter = 0;
 
@@ -606,7 +609,7 @@
         mode                   = d.mode ?? 'add';
         inventory              = d.inventory ?? {};
         ownedItems             = new Set(d.ownedItems ?? []);
-        equipped               = { hair:null, body:null, legs:null, eyes:null, smile:null, ...(d.equipped ?? {}) };
+        equipped               = { hair:null, body:null, legs:null, shoes:null, eyes:null, smile:null, ...(d.equipped ?? {}) };
         roomItems              = d.roomItems ?? [];
         instanceCounter        = d.instanceCounter ?? 0;
       } catch(e) { /* corrupted save — start fresh */ }
@@ -650,12 +653,16 @@
       if (pendingHourKey === null) pendingHourKey = currentKey;
       if (currentKey !== pendingHourKey) {
         if (pendingDollarsThisHour > 0) {
-          money += pendingDollarsThisHour;
-          const t = new Date(now); t.setMinutes(0,0,0);
-          recordDeposit(pendingDollarsThisHour, t);
+          const releasing = pendingDollarsThisHour;
+          // Zero out pending and update key FIRST before any saves happen
           pendingDollarsThisHour = 0;
+          pendingHourKey = currentKey;
+          money += releasing;
+          const t = new Date(now); t.setMinutes(0,0,0);
+          recordDeposit(releasing, t); // saveGame called inside here, pending is already 0
+        } else {
+          pendingHourKey = currentKey;
         }
-        pendingHourKey = currentKey;
       }
     }
 
@@ -883,6 +890,31 @@
         panel.appendChild(grid);
       }
 
+            // CURRENTLY WEARING (active consumable effects) — tap to remove
+      const activeConsumableSlots = ['hair','body','legs','eyes','smile'].filter(slot => {
+        const id = equipped[slot];
+        if (!id) return false;
+        const def = getItemDef(id);
+        return def && def.type === 'consumable';
+      });
+      if (activeConsumableSlots.length) {
+        const lbl = document.createElement('div');
+        lbl.className = 'closet-section-label'; lbl.innerText = '\u2728 Wearing Now';
+        panel.appendChild(lbl);
+        const grid = document.createElement('div');
+        grid.className = 'inv-grid';
+        activeConsumableSlots.forEach(slot => {
+          const id = equipped[slot];
+          const def = getItemDef(id);
+          if (!def) return;
+          const tile = buildTile(def, true);
+          tile.title = 'Tap to remove';
+          tile.onclick = () => removeConsumableEffect(slot);
+          grid.appendChild(tile);
+        });
+        panel.appendChild(grid);
+      }
+
       // WEARABLES: click to equip/unequip
       section('\uD83D\uDC55 Clothes', wearables, id => {
         const def = getItemDef(id); if (!def) return null;
@@ -893,15 +925,13 @@
         return tile;
       });
 
-      // CONSUMABLES: drag onto character
+      // CONSUMABLES: click to apply
       section('\uD83D\uDC84 Beauty', consumables, id => {
         const def=getItemDef(id); if (!def) return null;
         const cnt=inventory[id]||0;
         const tile=buildTile(def,false,cnt>1?cnt:0);
-        tile.draggable=true;
-        tile.title='Drag onto the character to apply!';
-        tile.addEventListener('dragstart', e => startDragConsumable(e,id));
-        tile.addEventListener('dragend',   ()=> endDragConsumable());
+        tile.title='Click to apply!';
+        tile.onclick = () => applyConsumable(id);
         return tile;
       });
 
@@ -970,16 +1000,41 @@
       renderClosetInventory();
     }
 
+    // Base layer IDs that should hide when their slot has an overlay active
+    const BASE_LAYER_MAP = {
+      eyes:  'char-eyes-base',
+      smile: 'char-smile-base',
+    };
+
     function applyEquipped() {
-      ['hair','body','legs','eyes','smile'].forEach(slot => {
+      ['hair','body','legs','shoes','eyes','smile'].forEach(slot => {
         const overlay = document.getElementById(`char-${slot}-overlay`);
         if (!overlay) return;
         const id = equipped[slot];
         if (id) {
           const def = getItemDef(id);
           if (def&&def.src) { overlay.src=def.src; overlay.style.display=''; }
-        } else { overlay.src=''; overlay.style.display='none'; }
+          // Hide base layer for this slot if applicable
+          const baseId = BASE_LAYER_MAP[slot];
+          if (baseId) { const b=document.getElementById(baseId); if(b) b.style.display='none'; }
+        } else {
+          overlay.src=''; overlay.style.display='none';
+          // Restore base layer
+          const baseId = BASE_LAYER_MAP[slot];
+          if (baseId) { const b=document.getElementById(baseId); if(b) b.style.display=''; }
+        }
       });
+    }
+
+    function removeConsumableEffect(slot) {
+      equipped[slot] = null;
+      const overlay = document.getElementById(`char-${slot}-overlay`);
+      if (overlay) { overlay.src=''; overlay.style.display='none'; }
+      // Restore base layer
+      const baseId = BASE_LAYER_MAP[slot];
+      if (baseId) { const b=document.getElementById(baseId); if(b) b.style.display=''; }
+      saveGame();
+      renderClosetInventory();
     }
 
     // ================================================================
@@ -1008,6 +1063,9 @@
       equipped[item.slot] = itemId;
       const overlay = document.getElementById(`char-${item.slot}-overlay`);
       if (overlay) { overlay.src=item.src; overlay.style.display=''; }
+      // Hide base layer if applicable
+      const baseId = BASE_LAYER_MAP[item.slot];
+      if (baseId) { const b=document.getElementById(baseId); if(b) b.style.display='none'; }
       saveGame();
       renderClosetInventory();
     }
