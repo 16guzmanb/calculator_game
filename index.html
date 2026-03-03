@@ -359,6 +359,19 @@
     .placed-item.glow-lamp { filter: drop-shadow(0 0 8px #ff69b4) drop-shadow(0 0 16px rgba(255,105,180,0.4)); }
     .placed-item.glow-lamp:hover { filter: drop-shadow(0 0 12px #ff69b4) drop-shadow(0 0 22px rgba(255,105,180,0.5)); }
 
+    /* ====== TOUCH DRAG GHOST ====== */
+    #touch-drag-ghost {
+      position: fixed;
+      z-index: 10000;
+      pointer-events: none;
+      opacity: 0.75;
+      display: none;
+      width: 40px; height: 40px;
+      object-fit: contain;
+      image-rendering: pixelated;
+      transform: translate(-50%, -50%);
+    }
+
     /* ====== BLIND BOX REVEAL ====== */
     #blindbox-reveal {
       position: fixed; inset: 0; z-index: 2000;
@@ -416,6 +429,8 @@
     <div id="blindbox-reveal-name"></div>
     <button id="blindbox-close-btn" onclick="closeBlindboxReveal()">Yay! &#x1F389;</button>
   </div>
+
+  <img id="touch-drag-ghost" src="" alt="" />
 
   <div class="game-frame">
 
@@ -561,7 +576,7 @@
       { id:'mgk_shirt',       name:'MGK Shirt',       price:0,  type:'wearable',   slot:'body',  icon:'mgk_shirt_icon.png',       src:'mgk_shirt.png',       desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'derpy_shirt',     name:'Derpy Shirt',     price:0,  type:'wearable',   slot:'body',  icon:'derpy_shirt_icon.png',     src:'derpy_shirt.png',     desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'pink_sweater',    name:'Pink Sweater',    price:0,  type:'wearable',   slot:'body',  icon:'pink_sweater_icon.png',    src:'pink_sweater.png',    desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
-      { id:'pink_black_sweater', name:'Pink/Black Sweater', price:0, type:'wearable', slot:'body', icon:'pink_black_sweater_icon.png', src:'pink_black_sweater.png', desc:'Own once, toggle in closet.', unlimited:false, qty:1 },
+      { id:'black_pink_sweater', name:'Pink/Black Sweater', price:0, type:'wearable', slot:'body', icon:'black_pink_sweater_icon.png', src:'black_pink_sweater.png', desc:'Own once, toggle in closet.', unlimited:false, qty:1 },
       { id:'black_tank',      name:'Black Tank Top',  price:4,  type:'wearable',   slot:'tank',  icon:'black_tank_icon.png',      src:'black_tank.png',      desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'pink_tank',       name:'Pink Tank Top',   price:4,  type:'wearable',   slot:'tank',  icon:'pink_tank_icon.png',       src:'pink_tank.png',       desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'green_tank',      name:'Green Tank Top',  price:4,  type:'wearable',   slot:'tank',  icon:'green_tank_icon.png',      src:'green_tank.png',      desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
@@ -579,7 +594,7 @@
       { id:'poster_2', name:'Poster 2', price:0, type:'poster', icon:'poster_2.png', src:'poster_2.png', desc:'Place in your room!', unlimited:false, qty:1 },
       { id:'poster_3', name:'Poster 3', price:0, type:'poster', icon:'poster_3.png', src:'poster_3.png', desc:'Place in your room!', unlimited:false, qty:1 },
       { id:'poster_4', name:'Poster 4', price:0, type:'poster', icon:'poster_4.png', src:'poster_4.png', desc:'Place in your room!', unlimited:false, qty:1 },
-      { id:'pink_crown',  name:'Pink Crown',  price:0, type:'poster', icon:'pink_crown.png',  src:'pink_crown.png',  desc:'Drag into your room!', unlimited:false, qty:1 },
+      { id:'pink_crown',  name:'Pink Crown',  price:0, type:'poster', icon:'pink_crown_icon.png',  src:'pink_crown_icon.png',  desc:'Drag into your room!', unlimited:false, qty:1 },
       { id:'skull_lamp',  name:'Skull Lamp',  price:0, type:'poster', icon:'skull_lamp.png',  src:'skull_lamp.png',  desc:'Drag into your room!', unlimited:false, qty:1 },
     ];
 
@@ -1041,6 +1056,7 @@
         tile.title='Drag into the room to place!';
         tile.addEventListener('dragstart', e=>startDragKeychain(e,id));
         tile.addEventListener('dragend',   ()=>endDragKeychain());
+        tile.addEventListener('touchstart', e=>touchStartClosetDrag(e,id,'closet-keychain'), {passive:false});
         return tile;
       });
 
@@ -1072,6 +1088,7 @@
         tile.title='Drag into the room to place!';
         tile.addEventListener('dragstart', e=>startDragKeychain(e,id));
         tile.addEventListener('dragend',   ()=>endDragKeychain());
+        tile.addEventListener('touchstart', e=>touchStartClosetDrag(e,id,'closet-poster'), {passive:false});
         return tile;
       });
     }
@@ -1425,12 +1442,205 @@
         renderClosetInventory();
       });
 
+      // Touch support for repositioning + double-tap return
+      img.addEventListener('touchstart', e => touchStartPlacedItem(e, ri), {passive:false});
+
       layer.appendChild(img);
     }
 
     function applyRoomItems() {
       document.querySelectorAll('.placed-item').forEach(el => el.remove());
       roomItems.forEach(ri => renderPlacedItem(ri));
+    }
+
+    // ================================================================
+    //  TOUCH DRAG SUPPORT (mobile)
+    // ================================================================
+
+    let touchDragType = null;    // 'closet-keychain', 'closet-poster', 'reposition'
+    let touchDragItemId = null;
+    let touchDragInstanceId = null;
+    let touchDragActive = false;
+    let touchStartTimer = null;
+    let touchStartX = 0, touchStartY = 0;
+
+    const ghost = document.getElementById('touch-drag-ghost');
+
+    function showGhost(src, x, y) {
+      ghost.src = src;
+      ghost.style.left = x + 'px';
+      ghost.style.top  = y + 'px';
+      ghost.style.display = 'block';
+    }
+
+    function moveGhost(x, y) {
+      ghost.style.left = x + 'px';
+      ghost.style.top  = y + 'px';
+    }
+
+    function hideGhost() {
+      ghost.style.display = 'none';
+      ghost.src = '';
+    }
+
+    // Start touch drag from a closet tile (keychains or posters)
+    function touchStartClosetDrag(e, itemId, type) {
+      if (e.touches.length !== 1) return;
+      const t = e.touches[0];
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+      touchDragItemId = itemId;
+      touchDragType = type;
+      touchDragActive = false;
+
+      // Need a small move threshold before activating drag
+      const onMove = (ev) => {
+        const mt = ev.touches[0];
+        const dx = Math.abs(mt.clientX - touchStartX);
+        const dy = Math.abs(mt.clientY - touchStartY);
+        if (!touchDragActive && (dx > 8 || dy > 8)) {
+          touchDragActive = true;
+          ev.preventDefault();
+          const def = getItemDef(itemId);
+          if (def) showGhost(def.icon || def.src, mt.clientX, mt.clientY);
+        }
+        if (touchDragActive) {
+          ev.preventDefault();
+          moveGhost(mt.clientX, mt.clientY);
+        }
+      };
+
+      const onEnd = (ev) => {
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onEnd);
+        document.removeEventListener('touchcancel', onEnd);
+
+        if (!touchDragActive) {
+          // Was a tap, not a drag — let normal onclick handle it
+          touchDragType = null;
+          touchDragItemId = null;
+          return;
+        }
+
+        hideGhost();
+
+        const ct = ev.changedTouches[0];
+        const roomStage = document.getElementById('room-stage');
+        const rect = roomStage.getBoundingClientRect();
+
+        // Check if released over room stage
+        if (ct.clientX >= rect.left && ct.clientX <= rect.right &&
+            ct.clientY >= rect.top  && ct.clientY <= rect.bottom) {
+
+          const xPct = (ct.clientX - rect.left) / rect.width * 100;
+          const yPct = (ct.clientY - rect.top) / rect.height * 100;
+          const id = touchDragItemId;
+
+          if (inventory[id] > 0) {
+            inventory[id]--;
+            if (inventory[id] <= 0) delete inventory[id];
+            instanceCounter++;
+            const ri = { id, instanceId: instanceCounter, xPct, yPct };
+            roomItems.push(ri);
+            renderPlacedItem(ri);
+            saveGame();
+            renderClosetInventory();
+          }
+        }
+
+        touchDragType = null;
+        touchDragItemId = null;
+        touchDragActive = false;
+      };
+
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', onEnd);
+      document.addEventListener('touchcancel', onEnd);
+    }
+
+    // Touch handlers for placed room items (reposition + double-tap to return)
+    let lastPlacedTap = 0;
+
+    function touchStartPlacedItem(e, ri) {
+      if (e.touches.length !== 1) return;
+      e.stopPropagation();
+      const t = e.touches[0];
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+      touchDragActive = false;
+      touchDragInstanceId = ri.instanceId;
+
+      const imgEl = e.currentTarget;
+
+      const onMove = (ev) => {
+        const mt = ev.touches[0];
+        const dx = Math.abs(mt.clientX - touchStartX);
+        const dy = Math.abs(mt.clientY - touchStartY);
+        if (!touchDragActive && (dx > 8 || dy > 8)) {
+          touchDragActive = true;
+          ev.preventDefault();
+          const def = KEYCHAIN_ITEMS.find(k => k.id === ri.id) || SHOP_ITEMS.find(s => s.id === ri.id && s.type === 'poster');
+          if (def) showGhost(def.src, mt.clientX, mt.clientY);
+          imgEl.style.opacity = '0.3';
+        }
+        if (touchDragActive) {
+          ev.preventDefault();
+          moveGhost(mt.clientX, mt.clientY);
+        }
+      };
+
+      const onEnd = (ev) => {
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('touchend', onEnd);
+        document.removeEventListener('touchcancel', onEnd);
+
+        imgEl.style.opacity = '';
+        hideGhost();
+
+        if (!touchDragActive) {
+          // It was a tap — check for double-tap to return item
+          const now = Date.now();
+          if (now - lastPlacedTap < 400 && touchDragInstanceId === ri.instanceId) {
+            // Double tap — return to closet
+            inventory[ri.id] = (inventory[ri.id] || 0) + 1;
+            roomItems = roomItems.filter(r => r.instanceId !== ri.instanceId);
+            imgEl.remove();
+            saveGame();
+            renderClosetInventory();
+            lastPlacedTap = 0;
+          } else {
+            lastPlacedTap = now;
+          }
+          touchDragInstanceId = null;
+          return;
+        }
+
+        // Reposition
+        const ct = ev.changedTouches[0];
+        const roomStage = document.getElementById('room-stage');
+        const rect = roomStage.getBoundingClientRect();
+
+        if (ct.clientX >= rect.left && ct.clientX <= rect.right &&
+            ct.clientY >= rect.top  && ct.clientY <= rect.bottom) {
+          const xPct = (ct.clientX - rect.left) / rect.width * 100;
+          const yPct = (ct.clientY - rect.top) / rect.height * 100;
+          const item = roomItems.find(r => r.instanceId === ri.instanceId);
+          if (item) {
+            item.xPct = xPct;
+            item.yPct = yPct;
+            imgEl.style.left = xPct + '%';
+            imgEl.style.top  = yPct + '%';
+            saveGame();
+          }
+        }
+
+        touchDragInstanceId = null;
+        touchDragActive = false;
+      };
+
+      document.addEventListener('touchmove', onMove, { passive: false });
+      document.addEventListener('touchend', onEnd);
+      document.addEventListener('touchcancel', onEnd);
     }
 
     // ================================================================
