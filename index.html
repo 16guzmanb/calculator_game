@@ -630,7 +630,15 @@
     let expectedAnswer = 0, equationText = '', triesThisQuestion = 0;
     let answerDigits = '', mode = 'add', isNextMixAdd = true;
     const HEARTS_PER_DOLLAR = 10, MAX_TRIES = 3;
-    const ranges = [[0,5],[6,10],[11,20],[21,40],[41,59],[60,70],[71,81],[82,92],[93,100]];
+    const ranges = [
+      [0,5,  0,5],   // Tier 1: both small
+      [0,10, 0,10],  // Tier 2: single digit mastery
+      [0,15, 0,15],  // Tier 3: bridging teens
+      [0,20, 0,20],  // Tier 4: 2nd grade fluency
+      [0,20, 0,30],  // Tier 5: one stays manageable
+      [0,20, 0,50],  // Tier 6: stretching
+      [0,50, 0,50],  // Tier 7: challenge
+    ];
 
     let inventory = {};
     let ownedItems = new Set();
@@ -750,8 +758,10 @@
 
     function generateQuestion() {
       triesThisQuestion = 0; answerDigits = ''; renderAnswerLine();
-      const [min,max] = ranges[tierIndex];
-      let n1=randInt(min,max), n2=randInt(min,max);
+      const [min1,max1,min2,max2] = ranges[tierIndex];
+      let n1=randInt(min1,max1), n2=randInt(min2,max2);
+      // Randomly swap so the bigger number isn't always first/second
+      if (Math.random() < 0.5) [n1,n2] = [n2,n1];
       let op = mode;
       if (mode==='mix') { op = isNextMixAdd?'add':'sub'; isNextMixAdd=!isNextMixAdd; }
       if (op==='sub') {
@@ -812,7 +822,7 @@
       renderTopBar(); saveGame();
     }
 
-    function levelUpIfNeeded()   { if (rightStreak>=5 && tierIndex<ranges.length-1) { tierIndex++; rightStreak=0; } }
+    function levelUpIfNeeded()   { if (rightStreak>=10 && tierIndex<ranges.length-1) { tierIndex++; rightStreak=0; } }
     function levelDownIfNeeded() { if (wrongStreak>=3 && tierIndex>0)               { tierIndex--; wrongStreak=0; } }
 
     function submitAnswer() {
