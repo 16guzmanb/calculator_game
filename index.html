@@ -438,11 +438,10 @@
     <div class="topbar">
       <div>
         <div class="hearts" id="hearts"></div>
-        <div class="tiny" id="hearts-hint">Get 10 hearts &#x2192; +$1</div>
+        <div class="tiny" id="hearts-hint">Get 6 hearts &#x2192; +$1</div>
       </div>
       <div class="bank">
         <div>Available: $<span id="money-display">0</span></div>
-        <div style="opacity:0.6;">Pending: $<span id="pending-display">0</span></div>
       </div>
     </div>
 
@@ -624,7 +623,6 @@
     // ================================================================
 
     let money = 0, heartsFilled = 0;
-    let pendingDollarsThisHour = 0, pendingHourKey = null;
     let transactions = [];
     let tierIndex = 0, rightStreak = 0, wrongStreak = 0;
     let expectedAnswer = 0, equationText = '', triesThisQuestion = 0;
@@ -645,7 +643,7 @@
     let equipped   = { hair:null, body:null, tank:null, legs:null, shoes:null, eyes:null, smile:null };
     let roomItems  = [];
     let instanceCounter = 0;
-    let activePaint = null;  // id of currently active paint overlay
+    let activePaint = null;
 
     // ================================================================
     //  SAVE / LOAD
@@ -656,7 +654,7 @@
     function saveGame() {
       try {
         localStorage.setItem(SAVE_KEY, JSON.stringify({
-          money, heartsFilled, pendingDollarsThisHour, pendingHourKey,
+          money, heartsFilled,
           transactions, tierIndex, rightStreak, wrongStreak, mode,
           inventory, ownedItems:[...ownedItems], equipped, roomItems, instanceCounter,
           activePaint
@@ -669,21 +667,19 @@
         const raw = localStorage.getItem(SAVE_KEY);
         if (!raw) return;
         const d = JSON.parse(raw);
-        money                  = d.money ?? 0;
-        heartsFilled           = d.heartsFilled ?? 0;
-        pendingDollarsThisHour = d.pendingDollarsThisHour ?? 0;
-        pendingHourKey         = d.pendingHourKey ?? null;
-        transactions           = (d.transactions ?? []).map(tx => ({...tx, at: new Date(tx.at)}));
-        tierIndex              = d.tierIndex ?? 0;
-        rightStreak            = d.rightStreak ?? 0;
-        wrongStreak            = d.wrongStreak ?? 0;
-        mode                   = d.mode ?? 'add';
-        inventory              = d.inventory ?? {};
-        ownedItems             = new Set(d.ownedItems ?? []);
-        equipped               = { hair:null, body:null, tank:null, legs:null, shoes:null, eyes:null, smile:null, ...(d.equipped ?? {}) };
-        roomItems              = d.roomItems ?? [];
-        instanceCounter        = d.instanceCounter ?? 0;
-        activePaint            = d.activePaint ?? null;
+        money        = d.money ?? 0;
+        heartsFilled = d.heartsFilled ?? 0;
+        transactions = (d.transactions ?? []).map(tx => ({...tx, at: new Date(tx.at)}));
+        tierIndex    = d.tierIndex ?? 0;
+        rightStreak  = d.rightStreak ?? 0;
+        wrongStreak  = d.wrongStreak ?? 0;
+        mode         = d.mode ?? 'add';
+        inventory    = d.inventory ?? {};
+        ownedItems   = new Set(d.ownedItems ?? []);
+        equipped     = { hair:null, body:null, tank:null, legs:null, shoes:null, eyes:null, smile:null, ...(d.equipped ?? {}) };
+        roomItems    = d.roomItems ?? [];
+        instanceCounter = d.instanceCounter ?? 0;
+        activePaint  = d.activePaint ?? null;
       } catch(e) {}
     }
 
@@ -701,7 +697,6 @@
       const inRoom = pageId === 'room-page';
       document.querySelector('.side-nav').style.display = inRoom ? 'none' : '';
       document.querySelector('.topbar').style.display   = inRoom ? 'none' : '';
-      // Start/stop calc eye animations based on active page
       if (pageId === 'game-page') { startCalcAnimTimers(); } else { stopCalcAnimTimers(); }
       renderTopBar();
       if (pageId === 'bank-page')  renderBank();
@@ -720,29 +715,8 @@
       generateQuestion();
     }
 
-    function getHourKey(d) { return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}`; }
-
-    function maybeReleasePending() {
-      const now = new Date(), currentKey = getHourKey(now);
-      if (pendingHourKey === null) pendingHourKey = currentKey;
-      if (currentKey !== pendingHourKey) {
-        if (pendingDollarsThisHour > 0) {
-          const releasing = pendingDollarsThisHour;
-          pendingDollarsThisHour = 0;
-          pendingHourKey = currentKey;
-          money += releasing;
-          const t = new Date(now); t.setMinutes(0,0,0);
-          recordDeposit(releasing, t);
-        } else {
-          pendingHourKey = currentKey;
-        }
-      }
-    }
-
     function renderTopBar() {
-      maybeReleasePending();
       document.getElementById('money-display').innerText = String(money);
-      document.getElementById('pending-display').innerText = String(pendingDollarsThisHour);
       const el = document.getElementById('hearts');
       el.innerHTML = '';
       for (let i = 0; i < HEARTS_PER_DOLLAR; i++) {
@@ -760,7 +734,6 @@
       triesThisQuestion = 0; answerDigits = ''; renderAnswerLine();
       const [min1,max1,min2,max2] = ranges[tierIndex];
       let n1=randInt(min1,max1), n2=randInt(min2,max2);
-      // Randomly swap so the bigger number isn't always first/second
       if (Math.random() < 0.5) [n1,n2] = [n2,n1];
       let op = mode;
       if (mode==='mix') { op = isNextMixAdd?'add':'sub'; isNextMixAdd=!isNextMixAdd; }
@@ -796,7 +769,7 @@
     // ================================================================
 
     function burstHeartConfetti() {
-      const hearts = ['\uD83E\uDD0D', '\uD83D\uDC97', '\uD83D\uDDA4']; // 🤍💗🖤
+      const hearts = ['\uD83E\uDD0D', '\uD83D\uDC97', '\uD83D\uDDA4'];
       const count = 30;
       for (let i = 0; i < count; i++) {
         const el = document.createElement('div');
@@ -814,12 +787,17 @@
 
     function awardHeart() {
       heartsFilled++;
-      if (heartsFilled>=HEARTS_PER_DOLLAR) {
-        heartsFilled=0; pendingDollarsThisHour+=1;
-        setFeedback('Correct! $1 is pending \u23F3','green');
+      if (heartsFilled >= HEARTS_PER_DOLLAR) {
+        heartsFilled = 0;
+        money += 1;
+        // Record each dollar earned as its own deposit transaction
+        transactions.unshift({ type:'deposit', amount:1, at:new Date() });
+        if (transactions.length > 5000) transactions.length = 5000;
+        setFeedback('Correct! +$1 \uD83D\uDCB5', 'green');
         burstHeartConfetti();
       }
-      renderTopBar(); saveGame();
+      renderTopBar();
+      saveGame();
     }
 
     function levelUpIfNeeded()   { if (rightStreak>=10 && tierIndex<ranges.length-1) { tierIndex++; rightStreak=0; } }
@@ -853,24 +831,6 @@
       renderBank();
     }
 
-    function recordDeposit(amount, atOverride) {
-      const at = atOverride ? new Date(atOverride) : new Date();
-      const hk = getHourKey(at);
-      let idx=-1;
-      for (let i=0;i<transactions.length;i++) {
-        if (transactions[i].type==='deposit' && getHourKey(new Date(transactions[i].at))===hk) { idx=i; break; }
-      }
-      if (idx>=0) {
-        const tx=transactions[idx]; tx.amount+=amount; tx.at=at;
-        transactions.splice(idx,1); transactions.unshift(tx);
-      } else {
-        transactions.unshift({type:'deposit',amount,at});
-      }
-      if (transactions.length>5000) transactions.length=5000;
-      saveGame();
-      if (document.getElementById('bank-page').classList.contains('active')) renderBank();
-    }
-
     const dollars    = n => `$${Number(n).toFixed(0)}`;
     const formatTime = d => new Date(d).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
     const formatDate = d => new Date(d).toLocaleDateString([],{month:'short',day:'numeric'});
@@ -902,7 +862,6 @@
       listEl.innerHTML = '';
       for (const item of SHOP_ITEMS) {
         let alreadyOwned = !item.unlimited && ownedItems.has(item.id);
-        // Paint can: owned if all 4 paints collected, or can't buy more than unrevealed paints remaining
         if (item.type === 'paintbox') {
           const unrevealed = PAINT_ITEMS.filter(p => !ownedItems.has(p.id)).length;
           const cansHeld = inventory['paint_can'] || 0;
@@ -941,7 +900,6 @@
       const item = SHOP_ITEMS.find(i => i.id===itemId);
       if (!item) return;
       if (!item.unlimited && ownedItems.has(itemId)) return;
-      // Block paint can if no unrevealed paints left or already holding enough cans
       if (item.type === 'paintbox') {
         const unrevealed = PAINT_ITEMS.filter(p => !ownedItems.has(p.id)).length;
         const cansHeld = inventory['paint_can'] || 0;
@@ -1002,7 +960,6 @@
         panel.appendChild(grid);
       }
 
-      // CURRENTLY WEARING (active consumable effects) — tap to remove
       const activeConsumableSlots = ['hair','body','tank','legs','eyes','smile'].filter(slot => {
         const id = equipped[slot];
         if (!id) return false;
@@ -1027,7 +984,6 @@
         panel.appendChild(grid);
       }
 
-      // WEARABLES
       section('\uD83D\uDC55 Clothes', wearables, id => {
         const def = getItemDef(id); if (!def) return null;
         const isOn = Object.values(equipped).includes(id);
@@ -1037,7 +993,6 @@
         return tile;
       });
 
-      // CONSUMABLES
       section('\uD83D\uDC84 Beauty', consumables, id => {
         const def=getItemDef(id); if (!def) return null;
         const cnt=inventory[id]||0;
@@ -1047,7 +1002,6 @@
         return tile;
       });
 
-      // BLIND BOXES & PAINT CANS: click to open
       section('\uD83C\uDF81 Boxes', blindboxes, id => {
         const def=getItemDef(id); if (!def) return null;
         const cnt=inventory[id]||0;
@@ -1058,7 +1012,6 @@
         return tile;
       });
 
-      // KEYCHAINS
       section('\uD83D\uDD11 Keychains', keychains, id => {
         const def=getItemDef(id); if (!def) return null;
         const cnt=inventory[id]||0;
@@ -1071,7 +1024,6 @@
         return tile;
       });
 
-      // PAINT: click to toggle (revealed from paint cans)
       if (paints.length) {
         const lbl = document.createElement('div');
         lbl.className='closet-section-label'; lbl.innerText='\uD83C\uDFA8 Paint';
@@ -1090,7 +1042,6 @@
         panel.appendChild(grid);
       }
 
-      // POSTERS & DECOR: drag into room (like keychains)
       section('\uD83D\uDDBC Decor', posters, id => {
         const def=getItemDef(id); if (!def) return null;
         const cnt=inventory[id]||0;
@@ -1273,19 +1224,19 @@
     function closeBlindboxReveal() {
       const reveal = document.getElementById('blindbox-reveal');
       if (reveal.dataset.canClose === 'false') return;
+      document.getElementById('blindbox-anim-img').style.display = '';
       reveal.classList.remove('active');
     }
 
     // ================================================================
-    //  PAINT CAN REVEAL (sequential, like blind box but name only)
+    //  PAINT CAN REVEAL
     // ================================================================
 
     function openPaintCan() {
       if (!inventory['paint_can'] || inventory['paint_can'] <= 0) return;
 
-      // Find next unrevealed paint (sequential order)
       const nextPaint = PAINT_ITEMS.find(p => !ownedItems.has(p.id));
-      if (!nextPaint) return; // all collected
+      if (!nextPaint) return;
 
       inventory['paint_can']--;
       if (inventory['paint_can'] <= 0) delete inventory['paint_can'];
@@ -1295,27 +1246,24 @@
       const nameEl   = document.getElementById('blindbox-reveal-name');
       const closeBtn = document.getElementById('blindbox-close-btn');
 
-      // Reset
       animImg.src = 'paintcan_icon.png';
+      animImg.style.display = '';
       animImg.className = '';
       nameEl.className = ''; nameEl.innerText = '';
       closeBtn.style.display = 'none';
       reveal.classList.add('active');
       reveal.dataset.canClose = 'false';
 
-      // Start wiggle
       setTimeout(() => animImg.classList.add('wiggling'), 80);
 
-      // After 3s: reveal name (no icon swap), apply paint
       setTimeout(() => {
         animImg.classList.remove('wiggling');
-        animImg.style.display = 'none'; // hide the can image
+        animImg.style.display = 'none';
         nameEl.innerText = `${nextPaint.name}! \uD83C\uDFA8`;
         setTimeout(() => nameEl.classList.add('show'), 150);
         closeBtn.style.display = '';
         reveal.dataset.canClose = 'true';
 
-        // Add to owned, apply paint overlay
         ownedItems.add(nextPaint.id);
         activePaint = nextPaint.id;
         applyPaint();
@@ -1324,17 +1272,8 @@
       }, 3000);
     }
 
-    // Patch closeBlindboxReveal to restore animImg display
-    const _origCloseBlindbox = closeBlindboxReveal;
-    closeBlindboxReveal = function() {
-      const reveal = document.getElementById('blindbox-reveal');
-      if (reveal.dataset.canClose === 'false') return;
-      document.getElementById('blindbox-anim-img').style.display = '';
-      reveal.classList.remove('active');
-    };
-
     // ================================================================
-    //  PAINT SYSTEM (room overlay, toggle on/off)
+    //  PAINT SYSTEM
     // ================================================================
 
     function togglePaint(itemId) {
@@ -1366,7 +1305,7 @@
     }
 
     // ================================================================
-    //  ROOM ITEMS (keychains & posters — drag from closet, drag to reposition, dblclick to return)
+    //  ROOM ITEMS
     // ================================================================
 
     let currentDragKeychain = null;
@@ -1455,7 +1394,6 @@
         renderClosetInventory();
       });
 
-      // Touch support for repositioning + double-tap return
       img.addEventListener('touchstart', e => touchStartPlacedItem(e, ri), {passive:false});
 
       layer.appendChild(img);
@@ -1467,14 +1405,13 @@
     }
 
     // ================================================================
-    //  TOUCH DRAG SUPPORT (mobile)
+    //  TOUCH DRAG SUPPORT
     // ================================================================
 
-    let touchDragType = null;    // 'closet-keychain', 'closet-poster', 'reposition'
+    let touchDragType = null;
     let touchDragItemId = null;
     let touchDragInstanceId = null;
     let touchDragActive = false;
-    let touchStartTimer = null;
     let touchStartX = 0, touchStartY = 0;
 
     const ghost = document.getElementById('touch-drag-ghost');
@@ -1496,7 +1433,6 @@
       ghost.src = '';
     }
 
-    // Start touch drag from a closet tile (keychains or posters)
     function touchStartClosetDrag(e, itemId, type) {
       if (e.touches.length !== 1) return;
       const t = e.touches[0];
@@ -1506,7 +1442,6 @@
       touchDragType = type;
       touchDragActive = false;
 
-      // Need a small move threshold before activating drag
       const onMove = (ev) => {
         const mt = ev.touches[0];
         const dx = Math.abs(mt.clientX - touchStartX);
@@ -1529,7 +1464,6 @@
         document.removeEventListener('touchcancel', onEnd);
 
         if (!touchDragActive) {
-          // Was a tap, not a drag — let normal onclick handle it
           touchDragType = null;
           touchDragItemId = null;
           return;
@@ -1541,7 +1475,6 @@
         const roomStage = document.getElementById('room-stage');
         const rect = roomStage.getBoundingClientRect();
 
-        // Check if released over room stage
         if (ct.clientX >= rect.left && ct.clientX <= rect.right &&
             ct.clientY >= rect.top  && ct.clientY <= rect.bottom) {
 
@@ -1571,7 +1504,6 @@
       document.addEventListener('touchcancel', onEnd);
     }
 
-    // Touch handlers for placed room items (reposition + double-tap to return)
     let lastPlacedTap = 0;
 
     function touchStartPlacedItem(e, ri) {
@@ -1611,10 +1543,8 @@
         hideGhost();
 
         if (!touchDragActive) {
-          // It was a tap — check for double-tap to return item
           const now = Date.now();
           if (now - lastPlacedTap < 400 && touchDragInstanceId === ri.instanceId) {
-            // Double tap — return to closet
             inventory[ri.id] = (inventory[ri.id] || 0) + 1;
             roomItems = roomItems.filter(r => r.instanceId !== ri.instanceId);
             imgEl.remove();
@@ -1628,7 +1558,6 @@
           return;
         }
 
-        // Reposition
         const ct = ev.changedTouches[0];
         const roomStage = document.getElementById('room-stage');
         const rect = roomStage.getBoundingClientRect();
@@ -1714,12 +1643,10 @@
       const animImg   = document.getElementById('calc-eye-anim');
       const chosen    = CALC_ANIMS[Math.floor(Math.random() * CALC_ANIMS.length)];
 
-      // Cache-bust so APNG replays from the start each time
       animImg.src = chosen.src + '?t=' + Date.now();
       animImg.style.display = '';
       staticEye.style.display = 'none';
 
-      // Swap back to static after the animation duration
       calcAnimDoneTimer = setTimeout(resetCalcAnim, chosen.duration);
     }
 
@@ -1744,7 +1671,6 @@
 
     loadGame();
     setupRoom();
-    if (!pendingHourKey) pendingHourKey = getHourKey(new Date());
     renderTopBar();
     setMode(mode);
     applyEquipped();
