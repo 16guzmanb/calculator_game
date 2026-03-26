@@ -129,7 +129,8 @@
     .k7{grid-column:1;grid-row:3} .k8{grid-column:2;grid-row:3} .k9{grid-column:3;grid-row:3}
     .k0{grid-column:2;grid-row:4}
     .kPlus{grid-column:4;grid-row:1} .kMinus{grid-column:4;grid-row:2} .kBoth{grid-column:4;grid-row:3}
-    .kClear{grid-column:1;grid-row:4} .kOK{grid-column:3/5;grid-row:4}
+    .kClear{grid-column:1;grid-row:4} .kOK{grid-column:3;grid-row:4} .kABC{grid-column:4;grid-row:4}
+    .equation.abc-word { font-size: 22px; letter-spacing: 3px; }
 
     /* ====== BANK ====== */
     .bank-panel {
@@ -438,7 +439,7 @@
     <div class="topbar">
       <div>
         <div class="hearts" id="hearts"></div>
-        <div class="tiny" id="hearts-hint">Get 6 hearts &#x2192; +$1</div>
+        <div class="tiny" id="hearts-hint">Get 3 hearts &#x2192; +$1</div>
       </div>
       <div class="bank">
         <div>Available: $<span id="money-display">0</span></div>
@@ -469,18 +470,19 @@
                 <div class="feedback"  id="feedback-text"></div>
               </div>
               <div class="keypad" aria-label="Keypad">
-                <button class="key num k1" onclick="pressDigit(1)">1</button>
-                <button class="key num k2" onclick="pressDigit(2)">2</button>
-                <button class="key num k3" onclick="pressDigit(3)">3</button>
-                <button class="key num k4" onclick="pressDigit(4)">4</button>
-                <button class="key num k5" onclick="pressDigit(5)">5</button>
-                <button class="key num k6" onclick="pressDigit(6)">6</button>
-                <button class="key num k7" onclick="pressDigit(7)">7</button>
-                <button class="key num k8" onclick="pressDigit(8)">8</button>
-                <button class="key num k9" onclick="pressDigit(9)">9</button>
+                <button class="key num k1" id="key-1" onclick="handleKeyPress(1)">1</button>
+                <button class="key num k2" id="key-2" onclick="handleKeyPress(2)">2</button>
+                <button class="key num k3" id="key-3" onclick="handleKeyPress(3)">3</button>
+                <button class="key num k4" id="key-4" onclick="handleKeyPress(4)">4</button>
+                <button class="key num k5" id="key-5" onclick="handleKeyPress(5)">5</button>
+                <button class="key num k6" id="key-6" onclick="handleKeyPress(6)">6</button>
+                <button class="key num k7" id="key-7" onclick="handleKeyPress(7)">7</button>
+                <button class="key num k8" id="key-8" onclick="handleKeyPress(8)">8</button>
+                <button class="key num k9" id="key-9" onclick="handleKeyPress(9)">9</button>
                 <button class="key action kClear" onclick="clearAnswer()">Clear</button>
-                <button class="key num k0"        onclick="pressDigit(0)">0</button>
-                <button class="key action kOK"    onclick="submitAnswer()">okaaaaaaaay</button>
+                <button class="key num k0" id="key-0" onclick="pressDigit(0)">0</button>
+                <button class="key mode kABC"   id="mode-abc"   onclick="setMode('abc')">ABC</button>
+                <button class="key action kOK"  onclick="submitAnswer()">ok!</button>
                 <button class="key mode kPlus"  id="mode-plus"  onclick="setMode('add')">+</button>
                 <button class="key mode kMinus" id="mode-minus" onclick="setMode('sub')">&minus;</button>
                 <button class="key mode kBoth"  id="mode-both"  onclick="setMode('mix')">Both</button>
@@ -627,7 +629,7 @@
     let tierIndex = 0, rightStreak = 0, wrongStreak = 0;
     let expectedAnswer = 0, equationText = '', triesThisQuestion = 0;
     let answerDigits = '', mode = 'add', isNextMixAdd = true;
-    const HEARTS_PER_DOLLAR = 6, MAX_TRIES = 2;
+    const HEARTS_PER_DOLLAR = 3, MAX_TRIES = 2;
     const ranges = [
       [0,5,  0,5],   // Tier 1: both small
       [0,10, 0,10],  // Tier 2: single digit mastery
@@ -640,6 +642,126 @@
 
     let inventory = {};
     let ownedItems = new Set();
+
+    // ================================================================
+    //  WORD TIERS (ABC Mode)
+    // ================================================================
+
+    const WORD_TIERS = [
+      // Tier 1: 3-4 letter words
+      [
+        { w:'cat',  hint:'a furry pet that meows' },
+        { w:'dog',  hint:'a pet that barks and wags its tail' },
+        { w:'run',  hint:'move your legs really fast' },
+        { w:'sun',  hint:'the big bright star in the sky' },
+        { w:'fun',  hint:'what you have at the playground' },
+        { w:'hat',  hint:'you wear it on your head' },
+        { w:'bat',  hint:'used to hit a baseball' },
+        { w:'map',  hint:'shows you where to go' },
+        { w:'hop',  hint:'jump on one foot like a bunny' },
+        { w:'top',  hint:'the highest part of something' },
+        { w:'cup',  hint:'you drink juice from this' },
+        { w:'mud',  hint:'wet dirt you can squish' },
+        { w:'bug',  hint:'a tiny crawling or flying critter' },
+        { w:'hug',  hint:'wrap your arms around someone you love' },
+        { w:'leg',  hint:'you have two of these to walk with' },
+        { w:'bed',  hint:'where you sleep at night' },
+        { w:'net',  hint:'basketball goes through this' },
+        { w:'pet',  hint:'an animal you take care of at home' },
+        { w:'sit',  hint:'what you do in a chair' },
+        { w:'pig',  hint:'a pink farm animal that oinks' },
+        { w:'fox',  hint:'a clever orange wild animal' },
+        { w:'box',  hint:'a square container with a lid' },
+        { w:'jam',  hint:'sweet fruit spread on toast' },
+        { w:'nap',  hint:'a short little sleep' },
+        { w:'dip',  hint:'dunk a chip into sauce' },
+        { w:'wet',  hint:'what you get in the rain' },
+        { w:'red',  hint:'the color of fire trucks' },
+        { w:'big',  hint:'the opposite of small' },
+        { w:'log',  hint:'a chunk of a tree trunk' },
+        { w:'dig',  hint:'use a shovel to do this in dirt' },
+      ],
+      // Tier 2: 5-6 letter words
+      [
+        { w:'apple',  hint:'a red or green fruit that grows on trees' },
+        { w:'happy',  hint:'how you feel when you smile' },
+        { w:'bunny',  hint:'a fluffy animal with long ears' },
+        { w:'candy',  hint:'a sweet sugary treat' },
+        { w:'daisy',  hint:'a white flower with a yellow center' },
+        { w:'kitty',  hint:'another word for a baby cat' },
+        { w:'puppy',  hint:'a baby dog' },
+        { w:'sunny',  hint:'a bright clear day outside' },
+        { w:'rainy',  hint:'a day with lots of rain drops' },
+        { w:'lucky',  hint:'finding a four leaf clover' },
+        { w:'silly',  hint:'being goofy and making people laugh' },
+        { w:'fuzzy',  hint:'soft and fluffy to the touch' },
+        { w:'pizza',  hint:'a cheesy round food with toppings' },
+        { w:'lemon',  hint:'a sour yellow fruit' },
+        { w:'melon',  hint:'a big round juicy fruit' },
+        { w:'tiger',  hint:'a big striped wild cat' },
+        { w:'water',  hint:'you drink this when you are thirsty' },
+        { w:'cloud',  hint:'fluffy white puffs in the sky' },
+        { w:'grass',  hint:'the green stuff in your yard' },
+        { w:'heart',  hint:'the shape you draw on valentines day' },
+        { w:'bread',  hint:'you make sandwiches with this' },
+        { w:'dream',  hint:'a story your brain tells while you sleep' },
+        { w:'float',  hint:'stay on top of water without sinking' },
+        { w:'green',  hint:'the color of leaves and frogs' },
+        { w:'music',  hint:'songs and sounds you dance to' },
+      ],
+      // Tier 3: 7-8 letter words
+      [
+        { w:'rainbow',  hint:'colorful arch in the sky after rain' },
+        { w:'chicken',  hint:'a farm bird that lays eggs' },
+        { w:'dolphin',  hint:'a smart ocean animal that jumps' },
+        { w:'giraffe',  hint:'the tallest animal with a long neck' },
+        { w:'penguin',  hint:'a black and white bird that cannot fly' },
+        { w:'popcorn',  hint:'a crunchy snack at the movies' },
+        { w:'cupcake',  hint:'a tiny cake with frosting on top' },
+        { w:'blanket',  hint:'you wrap up in this to stay warm' },
+        { w:'pancake',  hint:'a flat round breakfast food with syrup' },
+        { w:'sparkle',  hint:'what glitter and stars do' },
+        { w:'crayons',  hint:'colorful sticks you draw with' },
+        { w:'pretzel',  hint:'a twisted salty snack' },
+        { w:'feather',  hint:'light fluffy things on birds' },
+        { w:'diamond',  hint:'a shiny gem on a ring' },
+        { w:'lantern',  hint:'a little light you carry in the dark' },
+        { w:'monster',  hint:'a spooky creature under the bed' },
+        { w:'present',  hint:'a wrapped gift with a bow' },
+        { w:'octopus',  hint:'a sea creature with eight arms' },
+        { w:'raccoon',  hint:'a masked animal that loves trash' },
+        { w:'cabinet',  hint:'a kitchen cupboard with doors' },
+      ],
+      // Tier 4: 9+ letter words
+      [
+        { w:'butterfly',   hint:'a colorful insect with big pretty wings' },
+        { w:'chocolate',   hint:'a sweet brown treat everyone loves' },
+        { w:'pineapple',   hint:'a spiky tropical fruit with a leafy top' },
+        { w:'blueberry',   hint:'a tiny round blue fruit' },
+        { w:'superhero',   hint:'someone with special powers who saves the day' },
+        { w:'wonderful',   hint:'something really amazing and great' },
+        { w:'strawberry',  hint:'a small red fruit with tiny seeds' },
+        { w:'sunflower',   hint:'a tall yellow flower that faces the sun' },
+        { w:'dragonfly',   hint:'a flying bug with shiny wings near ponds' },
+        { w:'jellyfish',   hint:'a wiggly sea creature that can sting' },
+        { w:'adventure',   hint:'an exciting journey to somewhere new' },
+        { w:'moonlight',   hint:'the glow of the moon at nighttime' },
+        { w:'waterfall',   hint:'water that tumbles down from a cliff' },
+        { w:'fireworks',   hint:'colorful explosions in the sky on holidays' },
+        { w:'peppermint',  hint:'a cool minty flavor in candy canes' },
+      ],
+    ];
+
+    // ABC mode state
+    let abcWord = '';
+    let abcBlanks = [];       // [index1, index2] sorted
+    let abcLetters = [];      // 9 shuffled letter choices
+    let abcFilled = [null, null];
+    let abcTierIndex = 0;
+    let abcRightStreak = 0;
+    let abcWrongStreak = 0;
+    let abcTriesThisWord = 0;
+    let abcHint = '';
     let equipped   = { hair:null, body:null, tank:null, legs:null, shoes:null, eyes:null, smile:null };
     let roomItems  = [];
     let instanceCounter = 0;
@@ -657,7 +779,7 @@
           money, heartsFilled,
           transactions, tierIndex, rightStreak, wrongStreak, mode,
           inventory, ownedItems:[...ownedItems], equipped, roomItems, instanceCounter,
-          activePaint
+          activePaint, abcTierIndex, abcRightStreak, abcWrongStreak
         }));
       } catch(e) {}
     }
@@ -680,6 +802,11 @@
         roomItems    = d.roomItems ?? [];
         instanceCounter = d.instanceCounter ?? 0;
         activePaint  = d.activePaint ?? null;
+        abcTierIndex    = d.abcTierIndex ?? 0;
+        abcRightStreak  = d.abcRightStreak ?? 0;
+        abcWrongStreak  = d.abcWrongStreak ?? 0;
+        // Backfill: any keychain already in inventory counts as owned
+        KEYCHAIN_ITEMS.forEach(k => { if (inventory[k.id]) ownedItems.add(k.id); });
       } catch(e) {}
     }
 
@@ -712,7 +839,13 @@
       document.getElementById('mode-plus').classList.toggle('active', mode==='add');
       document.getElementById('mode-minus').classList.toggle('active', mode==='sub');
       document.getElementById('mode-both').classList.toggle('active', mode==='mix');
-      generateQuestion();
+      document.getElementById('mode-abc').classList.toggle('active', mode==='abc');
+      if (mode === 'abc') {
+        generateWordQuestion();
+      } else {
+        generateQuestion();
+        renderKeypad();
+      }
     }
 
     function renderTopBar() {
@@ -762,7 +895,131 @@
       answerDigits+=String(d); renderAnswerLine(); setFeedback('');
     }
 
-    function clearAnswer() { answerDigits=''; renderAnswerLine(); setFeedback(''); }
+    function clearAnswer() {
+      if (mode === 'abc') {
+        abcFilled = [null, null];
+        renderWordDisplay();
+        setFeedback('');
+        return;
+      }
+      answerDigits=''; renderAnswerLine(); setFeedback('');
+    }
+
+    function handleKeyPress(index) {
+      if (mode === 'abc') {
+        pressLetter(abcLetters[index - 1]);
+      } else {
+        pressDigit(index);
+      }
+    }
+
+    function renderKeypad() {
+      const isAbc = mode === 'abc';
+      for (let i = 1; i <= 9; i++) {
+        const btn = document.getElementById(`key-${i}`);
+        if (!btn) continue;
+        btn.innerText = isAbc ? (abcLetters[i - 1] || '') : String(i);
+        btn.className = `key ${isAbc ? 'mode' : 'num'} k${i}`;
+      }
+      const k0 = document.getElementById('key-0');
+      if (k0) k0.style.visibility = isAbc ? 'hidden' : '';
+    }
+
+    // ================================================================
+    //  ABC MODE
+    // ================================================================
+
+    function generateWordQuestion() {
+      abcFilled = [null, null];
+      abcTriesThisWord = 0;
+      const tier = WORD_TIERS[Math.min(abcTierIndex, WORD_TIERS.length - 1)];
+      const entry = tier[Math.floor(Math.random() * tier.length)];
+      abcWord = entry.w.toUpperCase();
+      abcHint = entry.hint;
+
+      // Pick 2 random blank positions
+      const indices = Array.from({length: abcWord.length}, (_, i) => i);
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]];
+      }
+      abcBlanks = indices.slice(0, 2).sort((a, b) => a - b);
+
+      // 2 correct letters + 7 random wrong ones
+      const correct = [abcWord[abcBlanks[0]], abcWord[abcBlanks[1]]];
+      const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const used = new Set(correct);
+      const wrong = [];
+      while (wrong.length < 7) {
+        const l = alphabet[Math.floor(Math.random() * 26)];
+        if (!used.has(l)) { used.add(l); wrong.push(l); }
+      }
+      abcLetters = [...correct, ...wrong];
+      for (let i = abcLetters.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [abcLetters[i], abcLetters[j]] = [abcLetters[j], abcLetters[i]];
+      }
+
+      renderWordDisplay();
+      renderKeypad();
+      setFeedback(abcHint, '#8a2be2');
+    }
+
+    function renderWordDisplay() {
+      let display = '';
+      for (let i = 0; i < abcWord.length; i++) {
+        if (i === abcBlanks[0])      display += (abcFilled[0] !== null ? abcFilled[0] : '_');
+        else if (i === abcBlanks[1]) display += (abcFilled[1] !== null ? abcFilled[1] : '_');
+        else                         display += abcWord[i];
+        if (i < abcWord.length - 1) display += ' ';
+      }
+      const eqEl = document.getElementById('equation-text');
+      eqEl.innerText = display;
+      eqEl.className = abcWord.length >= 6 ? 'equation abc-word' : 'equation';
+
+      const ans = document.getElementById('answer-text');
+      const b1 = abcFilled[0] !== null ? abcFilled[0] : '_';
+      const b2 = abcFilled[1] !== null ? abcFilled[1] : '_';
+      ans.innerText = `${b1}  ${b2}`;
+    }
+
+    function pressLetter(letter) {
+      if (!letter) return;
+      if (abcFilled[0] === null) {
+        abcFilled[0] = letter;
+        renderWordDisplay();
+        setFeedback('');
+      } else if (abcFilled[1] === null) {
+        abcFilled[1] = letter;
+        renderWordDisplay();
+        setTimeout(() => submitWordAnswer(), 350);
+      }
+    }
+
+    function submitWordAnswer() {
+      const c0 = abcWord[abcBlanks[0]];
+      const c1 = abcWord[abcBlanks[1]];
+      if (abcFilled[0] === c0 && abcFilled[1] === c1) {
+        abcTriesThisWord = 0; abcRightStreak++; abcWrongStreak = 0;
+        awardHeart();
+        if (!document.getElementById('feedback-text').innerText) setFeedback('Correct!', 'green');
+        if (abcRightStreak >= 8 && abcTierIndex < WORD_TIERS.length - 1) { abcTierIndex++; abcRightStreak = 0; }
+        generateWordQuestion();
+      } else {
+        abcTriesThisWord++;
+        if (abcTriesThisWord < MAX_TRIES) {
+          setFeedback('Hmm, try again! \uD83E\uDEE0', 'green');
+          abcFilled = [null, null];
+          renderWordDisplay();
+          setTimeout(() => setFeedback(abcHint, '#8a2be2'), 1200);
+        } else {
+          setFeedback('So close! \uD83D\uDC9C', '#8a2be2');
+          abcTriesThisWord = 0; abcWrongStreak++; abcRightStreak = 0;
+          if (abcWrongStreak >= 3 && abcTierIndex > 0) { abcTierIndex--; abcWrongStreak = 0; }
+          generateWordQuestion();
+        }
+      }
+    }
 
     // ================================================================
     //  HEART CONFETTI
@@ -804,6 +1061,7 @@
     function levelDownIfNeeded() { if (wrongStreak>=3 && tierIndex>0)               { tierIndex--; wrongStreak=0; } }
 
     function submitAnswer() {
+      if (mode === 'abc') { submitWordAnswer(); return; }
       if (!answerDigits.trim()) { setFeedback('I don\u2019t see your answer. Is it hiding? \uD83E\uDD0D','green'); return; }
       const userAns = parseInt(answerDigits,10);
       if (userAns===expectedAnswer) {
