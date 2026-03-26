@@ -1189,7 +1189,8 @@
       inventory['blind_box']--;
       if (inventory['blind_box']<=0) delete inventory['blind_box'];
 
-      const prize = KEYCHAIN_ITEMS[Math.floor(Math.random()*KEYCHAIN_ITEMS.length)];
+      const pool = KEYCHAIN_ITEMS.filter(k => !ownedItems.has(k.id));
+      const prize = (pool.length ? pool : KEYCHAIN_ITEMS)[Math.floor(Math.random() * (pool.length || KEYCHAIN_ITEMS.length))];
 
       const reveal   = document.getElementById('blindbox-reveal');
       const animImg  = document.getElementById('blindbox-anim-img');
@@ -1215,6 +1216,7 @@
         closeBtn.style.display = '';
         reveal.dataset.canClose = 'true';
 
+        ownedItems.add(prize.id);
         inventory[prize.id] = (inventory[prize.id]||0)+1;
         saveGame();
         renderClosetInventory();
