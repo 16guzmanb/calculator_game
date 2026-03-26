@@ -88,7 +88,7 @@
     /* ====== CALCULATOR ====== */
     .calculator-stage { position: absolute; inset: 0; display: grid; place-items: center; padding: 0; }
     .calc { position: relative; height: 100%; width: auto; aspect-ratio: 170/107; }
-    .calc img {
+    .calc img:not(#clock-face):not(#clock-hour):not(#clock-min) {
       position: absolute; inset: 0; width: 100%; height: 100%;
       object-fit: contain; image-rendering: pixelated;
       user-select: none; -webkit-user-drag: none;
@@ -1217,7 +1217,7 @@
     }
 
     function handleKeyPress(index) {
-      if (mode === 'abc') {
+      if (mode === 'abc' || mixShowingWord) {
         pressLetter(abcLetters[index - 1]);
       } else if (mode === 'clock') {
         if (index >= 1 && index <= 4) selectClockAnswer(clockOptions[index - 1]);
