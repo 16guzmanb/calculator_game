@@ -129,8 +129,27 @@
     .k7{grid-column:1;grid-row:3} .k8{grid-column:2;grid-row:3} .k9{grid-column:3;grid-row:3}
     .k0{grid-column:2;grid-row:4}
     .kPlus{grid-column:4;grid-row:1} .kMinus{grid-column:4;grid-row:2} .kBoth{grid-column:4;grid-row:3}
-    .kClear{grid-column:1;grid-row:4} .kOK{grid-column:3;grid-row:4} .kABC{grid-column:4;grid-row:4}
+    .kClear{grid-column:1;grid-row:4} .kOK{grid-column:3;grid-row:4} .kABC{grid-column:4;grid-row:4} .kClock{grid-column:5;grid-row:4}
     .equation.abc-word { font-size: 22px; letter-spacing: 3px; }
+
+    /* ====== CLOCK WIDGET ====== */
+    #clock-widget {
+      position: absolute;
+      left: 36%; top: 3%;
+      width: 28%; aspect-ratio: 1;
+      z-index: 7; display: none;
+    }
+    #clock-widget img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: contain; image-rendering: pixelated;
+      user-select: none; -webkit-user-drag: none;
+    }
+    #clock-hour, #clock-min {
+      /* transform-origin: center center assumes hand is centered in image pointing up.
+         If your hand image has pivot at the bottom, change to: 50% 75% or 50% 100% */
+      transform-origin: 50% 50%;
+    }
 
     /* ====== BANK ====== */
     .bank-panel {
@@ -469,7 +488,14 @@
                 <div class="answerline" id="answer-text"> </div>
                 <div class="feedback"  id="feedback-text"></div>
               </div>
-              <div class="keypad" aria-label="Keypad">
+
+              <!-- Clock widget (shown in clock mode) -->
+              <div id="clock-widget">
+                <img src="clock_face.png" id="clock-face" alt="clock" />
+                <img src="hour_hand.png"  id="clock-hour" alt="" />
+                <img src="min_hand.png"   id="clock-min"  alt="" />
+              </div>
+              <div class="keypad" aria-label="Keypad" style="grid-template-columns:1fr 1fr 1fr 0.9fr 0.9fr;">
                 <button class="key num k1" id="key-1" onclick="handleKeyPress(1)">1</button>
                 <button class="key num k2" id="key-2" onclick="handleKeyPress(2)">2</button>
                 <button class="key num k3" id="key-3" onclick="handleKeyPress(3)">3</button>
@@ -486,6 +512,7 @@
                 <button class="key mode kPlus"  id="mode-plus"  onclick="setMode('add')">+</button>
                 <button class="key mode kMinus" id="mode-minus" onclick="setMode('sub')">&minus;</button>
                 <button class="key mode kBoth"  id="mode-both"  onclick="setMode('mix')">Both</button>
+                <button class="key mode kClock" id="mode-clock" onclick="setMode('clock')">&#x1F551;</button>
               </div>
             </div>
           </div>
@@ -628,7 +655,7 @@
     let transactions = [];
     let tierIndex = 0, rightStreak = 0, wrongStreak = 0;
     let expectedAnswer = 0, equationText = '', triesThisQuestion = 0;
-    let answerDigits = '', mode = 'add', isNextMixAdd = true;
+    let answerDigits = '', mode = 'add', mixStep = 0; // mixStep: 0=add,1=word,2=sub,3=word
     const HEARTS_PER_DOLLAR = 3, MAX_TRIES = 2;
     const ranges = [
       [0,5,  0,5],   // Tier 1: both small
@@ -1003,6 +1030,11 @@
     let abcWrongStreak = 0;
     let abcTriesThisWord = 0;
     let abcHint = '';
+    let mixShowingWord = false;
+
+    // Clock mode state
+    let clockCorrect = '';
+    let clockOptions = [];
     let equipped   = { hair:null, body:null, tank:null, legs:null, shoes:null, eyes:null, smile:null };
     let roomItems  = [];
     let instanceCounter = 0;
@@ -1080,15 +1112,28 @@
       document.getElementById('mode-plus').classList.toggle('active', mode==='add');
       document.getElementById('mode-minus').classList.toggle('active', mode==='sub');
       document.getElementById('mode-both').classList.toggle('active', mode==='mix');
+      if (mode === 'mix') mixStep = 0;
       document.getElementById('mode-abc').classList.toggle('active', mode==='abc');
+      document.getElementById('mode-clock').classList.toggle('active', mode==='clock');
       // Swap calculator background
       const calcBg = document.getElementById('calc-bg');
       if (calcBg) calcBg.src = mode === 'abc' ? 'wordy_bg.png' : 'math_bg.png';
-      if (mode === 'abc') {
-        generateWordQuestion();
+      // Show/hide clock widget vs normal display
+      const clockWidget = document.getElementById('clock-widget');
+      const calcDisplay = document.querySelector('.calc-display');
+      if (mode === 'clock') {
+        if (clockWidget) clockWidget.style.display = '';
+        if (calcDisplay) calcDisplay.style.display = 'none';
+        generateClockQuestion();
       } else {
-        generateQuestion();
-        renderKeypad();
+        if (clockWidget) clockWidget.style.display = 'none';
+        if (calcDisplay) calcDisplay.style.display = '';
+        if (mode === 'abc') {
+          generateWordQuestion();
+        } else {
+          generateQuestion();
+          renderKeypad();
+        }
       }
     }
 
@@ -1108,12 +1153,27 @@
     function randInt(min, max) { return Math.floor(Math.random()*(max-min+1))+min; }
 
     function generateQuestion() {
+      // In mix mode, follow the pattern: +, word, -, word, repeat
+      if (mode === 'mix') {
+        const step = mixStep % 4;
+        mixStep++;
+        if (step === 1 || step === 3) {
+          mixShowingWord = true;
+          const calcDisplay = document.querySelector('.calc-display');
+          if (calcDisplay) calcDisplay.style.display = '';
+          generateWordQuestion();
+          return;
+        }
+        mixShowingWord = false;
+        renderKeypad();
+      }
+
       triesThisQuestion = 0; answerDigits = ''; renderAnswerLine();
       const [min1,max1,min2,max2] = ranges[tierIndex];
       let n1=randInt(min1,max1), n2=randInt(min2,max2);
       if (Math.random() < 0.5) [n1,n2] = [n2,n1];
-      let op = mode;
-      if (mode==='mix') { op = isNextMixAdd?'add':'sub'; isNextMixAdd=!isNextMixAdd; }
+      // For mix: step 0 = add, step 2 = sub (mixStep already incremented so subtract 1)
+      let op = mode === 'mix' ? (((mixStep - 1) % 4 === 0) ? 'add' : 'sub') : mode;
       if (op==='sub') {
         if (n1<n2) [n1,n2]=[n2,n1];
         expectedAnswer=n1-n2; equationText=`${n1} \u2212 ${n2} =`;
@@ -1146,27 +1206,44 @@
         setFeedback('');
         return;
       }
+      if (mode === 'clock') { generateClockQuestion(); return; }
       answerDigits=''; renderAnswerLine(); setFeedback('');
     }
 
     function handleKeyPress(index) {
       if (mode === 'abc') {
         pressLetter(abcLetters[index - 1]);
+      } else if (mode === 'clock') {
+        if (index >= 1 && index <= 4) selectClockAnswer(clockOptions[index - 1]);
       } else {
         pressDigit(index);
       }
     }
 
     function renderKeypad() {
-      const isAbc = mode === 'abc';
+      const isAbc   = mode === 'abc' || mixShowingWord;
+      const isClock = mode === 'clock';
       for (let i = 1; i <= 9; i++) {
         const btn = document.getElementById(`key-${i}`);
         if (!btn) continue;
-        btn.innerText = isAbc ? (abcLetters[i - 1] || '') : String(i);
-        btn.className = `key ${isAbc ? 'mode' : 'num'} k${i}`;
+        if (isClock) {
+          if (i <= 4) {
+            btn.innerText = clockOptions[i - 1] || '';
+            btn.className = `key mode k${i}`;
+            btn.style.visibility = '';
+            btn.style.fontSize = '14px';
+          } else {
+            btn.style.visibility = 'hidden';
+          }
+        } else {
+          btn.style.visibility = '';
+          btn.style.fontSize = '';
+          btn.innerText = isAbc ? (abcLetters[i - 1] || '') : String(i);
+          btn.className = `key ${isAbc ? 'mode' : 'num'} k${i}`;
+        }
       }
       const k0 = document.getElementById('key-0');
-      if (k0) k0.style.visibility = isAbc ? 'hidden' : '';
+      if (k0) k0.style.visibility = (isAbc || isClock) ? 'hidden' : '';
     }
 
     // ================================================================
@@ -1248,7 +1325,7 @@
         awardHeart();
         if (!document.getElementById('feedback-text').innerText) setFeedback('Correct!', 'green');
         if (abcRightStreak >= 8 && abcTierIndex < WORD_TIERS.length - 1) { abcTierIndex++; abcRightStreak = 0; }
-        generateWordQuestion();
+        if (mode === 'mix') { generateQuestion(); } else { generateWordQuestion(); }
       } else {
         abcTriesThisWord++;
         if (abcTriesThisWord < MAX_TRIES) {
@@ -1260,8 +1337,64 @@
           setFeedback('So close! \uD83D\uDC9C', '#8a2be2');
           abcTriesThisWord = 0; abcWrongStreak++; abcRightStreak = 0;
           if (abcWrongStreak >= 3 && abcTierIndex > 0) { abcTierIndex--; abcWrongStreak = 0; }
-          generateWordQuestion();
+          if (mode === 'mix') { generateQuestion(); } else { generateWordQuestion(); }
         }
+      }
+    }
+
+    // ================================================================
+    //  CLOCK MODE
+    // ================================================================
+
+    function fmtTime(h, m) {
+      return `${h}:${String(m).padStart(2,'0')}`;
+    }
+
+    function generateClockQuestion() {
+      const hour    = Math.floor(Math.random() * 12) + 1;
+      const minutes = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+      clockCorrect  = fmtTime(hour, minutes);
+
+      // Rotate hands — both images saved pointing straight up (north)
+      // Minute hand: 6 degrees per minute
+      const minDeg  = minutes * 6;
+      // Hour hand: 30 degrees per hour + 0.5 per minute
+      const hourDeg = ((hour % 12) * 30) + (minutes * 0.5);
+
+      const hourEl = document.getElementById('clock-hour');
+      const minEl  = document.getElementById('clock-min');
+      if (hourEl) hourEl.style.transform = `rotate(${hourDeg}deg)`;
+      if (minEl)  minEl.style.transform  = `rotate(${minDeg}deg)`;
+
+      // Build 3 wrong answers (unique, different from correct)
+      const wrongs = new Set();
+      while (wrongs.size < 3) {
+        const wh = Math.floor(Math.random() * 12) + 1;
+        const wm = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+        const wt = fmtTime(wh, wm);
+        if (wt !== clockCorrect) wrongs.add(wt);
+      }
+
+      clockOptions = [clockCorrect, ...[...wrongs]];
+      // Shuffle
+      for (let i = clockOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [clockOptions[i], clockOptions[j]] = [clockOptions[j], clockOptions[i]];
+      }
+
+      renderKeypad();
+      setFeedback('What time is it? \uD83D\uDD50', '#8a2be2');
+    }
+
+    function selectClockAnswer(chosen) {
+      if (!chosen) return;
+      if (chosen === clockCorrect) {
+        awardHeart();
+        setFeedback('Correct! \u2B50', 'green');
+        setTimeout(() => generateClockQuestion(), 900);
+      } else {
+        setFeedback(`Not quite! The time is ${clockCorrect} \uD83D\uDD54`, '#8a2be2');
+        setTimeout(() => generateClockQuestion(), 1800);
       }
     }
 
@@ -1306,6 +1439,7 @@
 
     function submitAnswer() {
       if (mode === 'abc') { submitWordAnswer(); return; }
+      if (mode === 'clock') { return; } // clock answers via button press only
       if (!answerDigits.trim()) { setFeedback('I don\u2019t see your answer. Is it hiding? \uD83E\uDD0D','green'); return; }
       const userAns = parseInt(answerDigits,10);
       if (userAns===expectedAnswer) {
