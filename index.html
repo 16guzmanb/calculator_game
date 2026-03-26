@@ -1134,8 +1134,13 @@
       const clockWidget = document.getElementById('clock-widget');
       const calcDisplay = document.querySelector('.calc-display');
       if (mode === 'clock') {
-        if (clockWidget) clockWidget.style.display = '';
+        if (clockWidget) clockWidget.style.display = 'block';
         if (calcDisplay) calcDisplay.style.display = 'none';
+        // Explicitly hide eye layers
+        const eyeStatic = document.getElementById('calc-eye-static');
+        const eyeAnim   = document.getElementById('calc-eye-anim');
+        if (eyeStatic) eyeStatic.style.display = 'none';
+        if (eyeAnim)   eyeAnim.style.display   = 'none';
         generateClockQuestion();
       } else {
         if (clockWidget) clockWidget.style.display = 'none';
