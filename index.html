@@ -1117,7 +1117,13 @@
       document.getElementById('mode-clock').classList.toggle('active', mode==='clock');
       // Swap calculator background
       const calcBg = document.getElementById('calc-bg');
-      if (calcBg) calcBg.src = mode === 'abc' ? 'wordy_bg.png' : 'math_bg.png';
+      if (mode === 'clock') {
+        if (calcBg) { calcBg.style.display = 'none'; }
+        document.querySelector('.calc').style.background = '#000';
+      } else {
+        if (calcBg) { calcBg.style.display = ''; calcBg.src = mode === 'abc' ? 'wordy_bg.png' : 'math_bg.png'; }
+        document.querySelector('.calc').style.background = '';
+      }
       // Show/hide clock widget vs normal display
       const clockWidget = document.getElementById('clock-widget');
       const calcDisplay = document.querySelector('.calc-display');
