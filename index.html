@@ -135,9 +135,9 @@
     /* ====== CLOCK WIDGET ====== */
     #clock-widget {
       position: absolute;
-      left: 36%; top: 3%;
-      width: 28%; aspect-ratio: 1;
-      z-index: 7; display: none;
+      left: 38%; top: 2%;
+      width: 34%; aspect-ratio: 1;
+      z-index: 8; display: none;
     }
     #clock-widget img {
       position: absolute; inset: 0;
@@ -146,8 +146,6 @@
       user-select: none; -webkit-user-drag: none;
     }
     #clock-hour, #clock-min {
-      /* transform-origin: center center assumes hand is centered in image pointing up.
-         If your hand image has pivot at the bottom, change to: 50% 75% or 50% 100% */
       transform-origin: 50% 50%;
     }
 
@@ -1120,9 +1118,17 @@
       if (mode === 'clock') {
         if (calcBg) { calcBg.style.display = 'none'; }
         document.querySelector('.calc').style.background = '#000';
+        // Hide face elements
+        ['calc-eye-static','calc-eye-anim'].forEach(id => {
+          const el = document.getElementById(id); if (el) el.style.display = 'none';
+        });
+        stopCalcAnimTimers();
       } else {
         if (calcBg) { calcBg.style.display = ''; calcBg.src = mode === 'abc' ? 'wordy_bg.png' : 'math_bg.png'; }
         document.querySelector('.calc').style.background = '';
+        // Restore face elements
+        document.getElementById('calc-eye-static').style.display = '';
+        startCalcAnimTimers();
       }
       // Show/hide clock widget vs normal display
       const clockWidget = document.getElementById('clock-widget');
