@@ -646,10 +646,10 @@
       { id:'black_tank',      name:'Black Tank Top',  price:1,  type:'wearable',   slot:'tank',  icon:'black_tank_icon.png',      src:'black_tank.png',      desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'pink_tank',       name:'Pink Tank Top',   price:1,  type:'wearable',   slot:'tank',  icon:'pink_tank_icon.png',       src:'pink_tank.png',       desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'green_tank',      name:'Green Tank Top',  price:1,  type:'wearable',   slot:'tank',  icon:'green_tank_icon.png',      src:'green_tank.png',      desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
-      { id:'pink_highlights', name:'Pink Highlights', price:4,  type:'consumable', slot:'hair',  icon:'pink_highlights_icon.png', src:'pink_highlights.png', desc:'Single use. Click in closet to apply.',        unlimited:true,  qty:1 },
-      { id:'pink_hair_dye',   name:'Pink Hair Dye',   price:4,  type:'consumable', slot:'hair',  icon:'pink_hair_icon.png',       src:'pink_hair.png',       desc:'Single use. Click in closet to apply.',        unlimited:true,  qty:1 },
-      { id:'green_hair_dye',  name:'Green Hair Dye',  price:4,  type:'consumable', slot:'hair',  icon:'green_hair_icon.png',      src:'green_hair.png',      desc:'Single use. Click in closet to apply.',        unlimited:true,  qty:1 },
-      { id:'black_hair_dye',  name:'Black Hair Dye',  price:4,  type:'consumable', slot:'hair',  icon:'black_hair_icon.png',      src:'black_hair.png',      desc:'Single use. Click in closet to apply.',        unlimited:true,  qty:1 },
+      { id:'pink_highlights', name:'Pink Highlights', price:4,  type:'consumable', slot:'hair',  icon:'pink_highlights_icon.png', src:'pink_highlights.png', desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
+      { id:'pink_hair_dye',   name:'Pink Hair Dye',   price:4,  type:'consumable', slot:'hair',  icon:'pink_hair_icon.png',       src:'pink_hair.png',       desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
+      { id:'green_hair_dye',  name:'Green Hair Dye',  price:4,  type:'consumable', slot:'hair',  icon:'green_hair_icon.png',      src:'green_hair.png',      desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
+      { id:'black_hair_dye',  name:'Black Hair Dye',  price:4,  type:'consumable', slot:'hair',  icon:'black_hair_icon.png',      src:'black_hair.png',      desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
       { id:'black_shorts',    name:'Black Shorts',    price:3,  type:'wearable',   slot:'legs',  icon:'black_shorts_icon.png',    src:'black_shorts.png',    desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'bluejeans',       name:'Blue Jeans',      price:3,  type:'wearable',   slot:'legs',  icon:'bluejeans_icon.png',       src:'bluejeans.png',       desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'black_leggings',  name:'Black Leggings',  price:3,  type:'wearable',   slot:'legs',  icon:'black_leggings_icon.png',  src:'black_leggings.png',  desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
@@ -704,13 +704,20 @@
     ];
 
     const HAIR_DYE_ITEMS = [
-      { id:'drippy_hair',       name:'Drippy',       type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-1.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
-      { id:'color_crazy_hair',  name:'Color Crazy',  type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-2.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
-      { id:'space_buns_hair',   name:'Space Buns',   type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-3.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
-      { id:'zoey_hair',         name:'Zoey Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-4.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
-      { id:'mira_hair',         name:'Mira Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-5.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
-      { id:'rumi_hair',         name:'Rumi Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-6.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
+      { id:'drippy_hair',       name:'Drippy',       type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-1.png', desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
+      { id:'color_crazy_hair',  name:'Color Crazy',  type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-2.png', desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
+      { id:'space_buns_hair',   name:'Space Buns',   type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-3.png', desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
+      { id:'zoey_hair',         name:'Zoey Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-4.png', desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
+      { id:'mira_hair',         name:'Mira Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-5.png', desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
+      { id:'rumi_hair',         name:'Rumi Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-6.png', desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
     ];
+
+    function getPermanentHairItems() {
+      return [
+        ...SHOP_ITEMS.filter(i => i.type === 'consumable' && i.slot === 'hair'),
+        ...HAIR_DYE_ITEMS,
+      ];
+    }
 
     function getItemDef(id) {
       return SHOP_ITEMS.find(i => i.id === id)
@@ -1152,10 +1159,13 @@
         abcTierIndex    = d.abcTierIndex ?? 0;
         abcRightStreak  = d.abcRightStreak ?? 0;
         abcWrongStreak  = d.abcWrongStreak ?? 0;
-        // Backfill: any keychain, paint, or hair dye already in inventory counts as owned
+        // Backfill: any keychain, paint, or hair option already in inventory/equipped counts as owned
         KEYCHAIN_ITEMS.forEach(k => { if (inventory[k.id]) ownedItems.add(k.id); });
         PAINT_ITEMS.forEach(p => { if (inventory[p.id]) ownedItems.add(p.id); });
         HAIR_DYE_ITEMS.forEach(h => { if (inventory[h.id]) ownedItems.add(h.id); });
+        getPermanentHairItems().forEach(h => {
+          if (inventory[h.id] || equipped.hair === h.id) ownedItems.add(h.id);
+        });
       } catch(e) {}
     }
 
@@ -1591,16 +1601,23 @@
       listEl.innerHTML = '';
       for (const item of SHOP_ITEMS) {
         let alreadyOwned = !item.unlimited && ownedItems.has(item.id);
+        let hideFromShop = false;
         if (item.type === 'paintbox') {
           const unrevealed = PAINT_ITEMS.filter(p => !ownedItems.has(p.id)).length;
           const cansHeld = inventory['paint_can'] || 0;
           alreadyOwned = unrevealed === 0 || cansHeld >= unrevealed;
+          hideFromShop = unrevealed === 0;
         }
         if (item.type === 'hairbox') {
           const unrevealed = HAIR_DYE_ITEMS.filter(h => !ownedItems.has(h.id)).length;
           const boxesHeld = inventory['mystery_hair_dye_box'] || 0;
           alreadyOwned = unrevealed === 0 || boxesHeld >= unrevealed;
+          hideFromShop = unrevealed === 0;
         }
+        if (alreadyOwned && item.type !== 'blindbox' && item.type !== 'paintbox' && item.type !== 'hairbox') {
+          hideFromShop = true;
+        }
+        if (hideFromShop) continue;
         const row = document.createElement('div');
         row.className = 'shop-item';
 
@@ -1652,7 +1669,7 @@
         transactions.unshift({ type:'deduction', amount:item.price, at:new Date(), note:item.name });
         if (transactions.length > 5000) transactions.length = 5000;
       }
-      if (!item.unlimited) ownedItems.add(itemId);
+      if (!item.unlimited || (item.type === 'consumable' && item.slot === 'hair')) ownedItems.add(itemId);
       inventory[itemId] = (inventory[itemId]||0) + (item.qty || 1);
       saveGame();
       renderTopBar();
@@ -1677,18 +1694,18 @@
       panel.innerHTML = '';
 
       const allIds = Object.keys(inventory).filter(id => (inventory[id]||0) > 0);
-
-      if (!allIds.length) {
-        const e=document.createElement('div'); e.className='inv-empty';
-        e.innerText='Nothing here! Visit the Shop \u2B06'; panel.appendChild(e); return;
-      }
-
       const wearables   = allIds.filter(id => { const d=getItemDef(id); return d&&d.type==='wearable'; });
-      const consumables = allIds.filter(id => { const d=getItemDef(id); return d&&d.type==='consumable'; });
+      const consumables = allIds.filter(id => { const d=getItemDef(id); return d&&d.type==='consumable'&&d.slot!=='hair'; });
+      const hairOptions = getPermanentHairItems().filter(h => ownedItems.has(h.id));
       const blindboxes  = allIds.filter(id => { const d=getItemDef(id); return d&&(d.type==='blindbox'||d.type==='paintbox'||d.type==='hairbox'); });
       const paints      = PAINT_ITEMS.filter(p => ownedItems.has(p.id)).map(p => p.id);
       const posters     = allIds.filter(id => { const d=getItemDef(id); return d&&d.type==='poster'; });
       const keychains   = allIds.filter(id => KEYCHAIN_ITEMS.some(k=>k.id===id));
+
+      if (!wearables.length && !consumables.length && !hairOptions.length && !blindboxes.length && !paints.length && !posters.length && !keychains.length) {
+        const e=document.createElement('div'); e.className='inv-empty';
+        e.innerText='Nothing here! Visit the Shop \u2B06'; panel.appendChild(e); return;
+      }
 
       function section(label, ids, buildTileFn) {
         if (!ids.length) return;
@@ -1734,10 +1751,10 @@
         return tile;
       });
 
-      section('\uD83D\uDC84 Beauty', consumables, id => {
+      section('\uD83D\uDC84 Beauty', [...hairOptions.map(h => h.id), ...consumables], id => {
         const def=getItemDef(id); if (!def) return null;
         const cnt=inventory[id]||0;
-        const showLabel = HAIR_DYE_ITEMS.some(h => h.id === id);
+        const showLabel = def.slot === 'hair';
         const entry=buildTile(def,false,cnt>1?cnt:0,{ showLabel });
         const tile = entry.tile || entry;
         tile.title=`${def.name} - Click to apply!`;
@@ -1921,9 +1938,13 @@
     function applyConsumable(itemId) {
       const item = getItemDef(itemId);
       if (!item||item.type!=='consumable') return;
-      if (!inventory[itemId]||inventory[itemId]<=0) return;
-      inventory[itemId]--;
-      if (inventory[itemId]<=0) delete inventory[itemId];
+      if (item.slot === 'hair') {
+        ownedItems.add(itemId);
+      } else {
+        if (!inventory[itemId]||inventory[itemId]<=0) return;
+        inventory[itemId]--;
+        if (inventory[itemId]<=0) delete inventory[itemId];
+      }
       equipped[item.slot] = itemId;
       const overlay = document.getElementById(`char-${item.slot}-overlay`);
       if (overlay) { overlay.src=item.src; overlay.style.display=''; }
