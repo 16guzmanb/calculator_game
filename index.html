@@ -1337,7 +1337,7 @@
       if (mode === 'abc' || mixShowingWord) {
         pressLetter(abcLetters[index - 1]);
       } else if (mode === 'clock') {
-        if (index >= 1 && index <= 9) selectClockAnswer(clockOptions[index - 1]);
+        if (index >= 1 && index <= 4) selectClockAnswer(clockOptions[index - 1]);
       } else {
         pressDigit(index);
       }
@@ -1350,11 +1350,13 @@
         const btn = document.getElementById(`key-${i}`);
         if (!btn) continue;
         if (isClock) {
-          if (i <= 9) {
+          if (i <= 4) {
             btn.innerText = clockOptions[i - 1] || '';
             btn.className = `key mode k${i}`;
             btn.style.visibility = '';
             btn.style.fontSize = '13px';
+          } else {
+            btn.style.visibility = 'hidden';
           }
         } else {
           btn.style.visibility = '';
@@ -1489,7 +1491,7 @@
 
       // Build 3 wrong answers (unique, different from correct)
       const wrongs = new Set();
-      while (wrongs.size < 8) {
+      while (wrongs.size < 3) {
         const wh = Math.floor(Math.random() * 12) + 1;
         const wm = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
         const wt = fmtTime(wh, wm);
