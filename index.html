@@ -469,6 +469,130 @@
       pointer-events: none;
       animation: confettiFall 2s ease-out forwards;
     }
+    #shirt-designer-overlay {
+      position: fixed; inset: 0; z-index: 2100;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      box-sizing: border-box;
+    }
+    #shirt-designer-overlay.active { display: flex; }
+    .shirt-designer-modal {
+      width: min(760px, 100%);
+      max-height: 100%;
+      overflow: auto;
+      background: rgba(255,240,248,0.98);
+      color: #111;
+      border-radius: 12px;
+      padding: 12px;
+      box-sizing: border-box;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+    }
+    .shirt-designer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .shirt-designer-head h3 {
+      margin: 0;
+      font-size: 20px;
+    }
+    .shirt-close-btn {
+      border: 0;
+      border-radius: 50%;
+      width: 28px; height: 28px;
+      background: #111;
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+    }
+    .shirt-designer-layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) minmax(210px, 240px);
+      gap: 12px;
+      align-items: start;
+    }
+    .shirt-canvas-stage {
+      background: rgba(255,255,255,0.92);
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      place-items: center;
+      min-height: 280px;
+    }
+    #shirt-designer-canvas {
+      width: min(100%, 420px);
+      aspect-ratio: 170 / 107;
+      border-radius: 8px;
+      background: #ffe7f2;
+      image-rendering: pixelated;
+      touch-action: none;
+      box-shadow: inset 0 0 0 1px rgba(17,17,17,0.12);
+    }
+    .shirt-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .shirt-control-group {
+      background: rgba(255,255,255,0.78);
+      border-radius: 10px;
+      padding: 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .shirt-group-label {
+      font-size: 13px;
+      color: rgba(17,17,17,0.8);
+    }
+    .shirt-swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .shirt-swatch {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 8px;
+      border: 2px solid rgba(17,17,17,0.12);
+      cursor: pointer;
+      padding: 0;
+    }
+    .shirt-swatch.active {
+      border-color: #ff4fa3;
+      box-shadow: 0 0 0 2px rgba(255,79,163,0.25);
+    }
+    .shirt-tool-row,
+    .shirt-action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .shirt-btn {
+      border: 0;
+      border-radius: 9px;
+      padding: 9px 10px;
+      cursor: pointer;
+      background: #111;
+      color: #fff;
+      font-size: 13px;
+    }
+    .shirt-btn.active { background: #ff4fa3; }
+    .shirt-btn.alt { background: #ff69b4; }
+    .shirt-btn.soft { background: #6b6b6b; }
+    .shirt-slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .shirt-slider-wrap input[type="range"] { flex: 1; }
     @keyframes confettiFall {
       0%   { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
       50%  { opacity: 1; transform: translateY(40vh) rotate(180deg) scale(0.9); }
@@ -483,6 +607,52 @@
     <img id="blindbox-anim-img" src="blind_box_icon.png" alt="Blind Box" />
     <div id="blindbox-reveal-name"></div>
     <button id="blindbox-close-btn" onclick="closeBlindboxReveal()">Yay! &#x1F389;</button>
+  </div>
+
+  <div id="shirt-designer-overlay">
+    <div class="shirt-designer-modal">
+      <div class="shirt-designer-head">
+        <h3>Shirt Studio</h3>
+        <button class="shirt-close-btn" type="button" onclick="closeShirtDesigner()">&#x2715;</button>
+      </div>
+      <div class="shirt-designer-layout">
+        <div class="shirt-canvas-stage">
+          <canvas id="shirt-designer-canvas" width="170" height="107"></canvas>
+        </div>
+        <div class="shirt-controls">
+          <div class="shirt-control-group">
+            <div class="shirt-group-label">Dye Color</div>
+            <div id="shirt-dye-swatches" class="shirt-swatch-grid"></div>
+          </div>
+          <div class="shirt-control-group">
+            <div class="shirt-group-label">Fabric Paint</div>
+            <div id="shirt-paint-swatches" class="shirt-swatch-grid"></div>
+          </div>
+          <div class="shirt-control-group">
+            <div class="shirt-group-label">Tools</div>
+            <div class="shirt-tool-row">
+              <button id="shirt-tool-brush" class="shirt-btn active" type="button" onclick="setShirtDesignerTool('brush')">Brush</button>
+              <button id="shirt-tool-eraser" class="shirt-btn" type="button" onclick="setShirtDesignerTool('eraser')">Eraser</button>
+            </div>
+            <div class="shirt-slider-wrap">
+              <span>Size</span>
+              <input id="shirt-brush-size" type="range" min="1" max="14" value="4" oninput="setShirtBrushSize(this.value)" />
+              <span id="shirt-brush-size-value">4</span>
+            </div>
+          </div>
+          <div class="shirt-control-group">
+            <div class="shirt-action-row">
+              <button class="shirt-btn soft" type="button" onclick="undoShirtDesigner()">Undo</button>
+              <button class="shirt-btn soft" type="button" onclick="clearShirtDesigner()">Clear</button>
+            </div>
+            <div class="shirt-action-row">
+              <button class="shirt-btn" type="button" onclick="closeShirtDesigner()">Later</button>
+              <button class="shirt-btn alt" type="button" onclick="saveCustomShirt()">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <img id="touch-drag-ghost" src="" alt="" />
@@ -644,6 +814,7 @@
       { id:'derpy_shirt',     name:'Derpy Shirt',     price:4,  type:'wearable',   slot:'body',  icon:'derpy_shirt_icon.png',     src:'derpy_shirt.png',     desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'pink_sweater',    name:'Pink Sweater',    price:3,  type:'wearable',   slot:'body',  icon:'pink_sweater_icon.png',    src:'pink_sweater.png',    desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'black_pink_sweater', name:'Pink/Black Sweater', price:3, type:'wearable', slot:'body', icon:'black_pink_sweater_icon.png', src:'black_pink_sweater.png', desc:'Own once, toggle in closet.', unlimited:false, qty:1 },
+      { id:'shirt_design_kit', name:'Shirt Design Kit', price:0, type:'designkit', icon:'cust_shirt_outline.png', desc:'Design your own shirt!', unlimited:true, qty:1 },
       { id:'black_tank',      name:'Black Tank Top',  price:1,  type:'wearable',   slot:'tank',  icon:'black_tank_icon.png',      src:'black_tank.png',      desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'pink_tank',       name:'Pink Tank Top',   price:1,  type:'wearable',   slot:'tank',  icon:'pink_tank_icon.png',       src:'pink_tank.png',       desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'green_tank',      name:'Green Tank Top',  price:1,  type:'wearable',   slot:'tank',  icon:'green_tank_icon.png',      src:'green_tank.png',      desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
@@ -706,6 +877,11 @@
 
     const MYSTERY_PAINT_ITEMS = PAINT_ITEMS.filter(p => ['purple_paint','kpop_colors_paint','checker_paint','mgk_paint_job'].includes(p.id));
 
+    const SHIRT_DESIGN_SWATCHES = [
+      '#ff00a8', '#ff5a36', '#ffef00', '#4dff6a', '#00f0ff',
+      '#356bff', '#9b4dff', '#ffffff', '#111111', '#8b5a2b'
+    ];
+
     const HAIR_DYE_ITEMS = [
       { id:'drippy_hair',       name:'Drippy',       type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-1.png', desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
       { id:'color_crazy_hair',  name:'Color Crazy',  type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-2.png', desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
@@ -727,6 +903,7 @@
         || KEYCHAIN_ITEMS.find(i => i.id === id)
         || PAINT_ITEMS.find(i => i.id === id)
         || HAIR_DYE_ITEMS.find(i => i.id === id)
+        || customShirts.find(i => i.id === id)
         || null;
     }
 
@@ -752,6 +929,8 @@
 
     let inventory = {};
     let ownedItems = new Set();
+    let customShirts = [];
+    let customShirtCounter = 0;
 
     // ================================================================
     //  WORD TIERS (ABC Mode)
@@ -1136,7 +1315,8 @@
           money, heartsFilled,
           transactions, tierIndex, rightStreak, wrongStreak, mode,
           inventory, ownedItems:[...ownedItems], equipped, roomItems, instanceCounter,
-          activePaint, abcTierIndex, abcRightStreak, abcWrongStreak
+          activePaint, abcTierIndex, abcRightStreak, abcWrongStreak,
+          customShirts, customShirtCounter
         }));
       } catch(e) {}
     }
@@ -1162,6 +1342,8 @@
         abcTierIndex    = d.abcTierIndex ?? 0;
         abcRightStreak  = d.abcRightStreak ?? 0;
         abcWrongStreak  = d.abcWrongStreak ?? 0;
+        customShirts = d.customShirts ?? [];
+        customShirtCounter = d.customShirtCounter ?? customShirts.length ?? 0;
         // Backfill: any keychain, paint, or hair option already in inventory/equipped counts as owned
         KEYCHAIN_ITEMS.forEach(k => { if (inventory[k.id]) ownedItems.add(k.id); });
         PAINT_ITEMS.forEach(p => { if (inventory[p.id]) ownedItems.add(p.id); });
@@ -1169,6 +1351,7 @@
         getPermanentHairItems().forEach(h => {
           if (inventory[h.id] || equipped.hair === h.id) ownedItems.add(h.id);
         });
+        customShirts.forEach(s => { if (inventory[s.id] || equipped.body === s.id) ownedItems.add(s.id); });
       } catch(e) {}
     }
 
@@ -1546,6 +1729,299 @@
       }
     }
 
+    // ================================================================
+    //  SHIRT DESIGNER
+    // ================================================================
+
+    const shirtDesigner = {
+      dyeColor: SHIRT_DESIGN_SWATCHES[0],
+      paintColor: SHIRT_DESIGN_SWATCHES[4],
+      tool: 'brush',
+      brushSize: 4,
+      isDrawing: false,
+      lastX: 0,
+      lastY: 0,
+      paintCanvas: null,
+      paintCtx: null,
+      history: [],
+      canvas: null,
+      ctx: null,
+      initialized: false,
+      assetsPromise: null,
+      blankImg: null,
+      outlineImg: null,
+    };
+
+    function createOffscreenCanvas(width, height) {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      return canvas;
+    }
+
+    function snapshotShirtDesigner() {
+      shirtDesigner.history.push(shirtDesigner.paintCtx.getImageData(0, 0, shirtDesigner.paintCanvas.width, shirtDesigner.paintCanvas.height));
+      if (shirtDesigner.history.length > 40) shirtDesigner.history.shift();
+    }
+
+    function setShirtDesignerTool(tool) {
+      shirtDesigner.tool = tool;
+      document.getElementById('shirt-tool-brush').classList.toggle('active', tool === 'brush');
+      document.getElementById('shirt-tool-eraser').classList.toggle('active', tool === 'eraser');
+    }
+
+    function setShirtBrushSize(value) {
+      shirtDesigner.brushSize = Number(value);
+      document.getElementById('shirt-brush-size-value').innerText = String(value);
+    }
+
+    function buildShirtSwatches(containerId, colors, selectedColor, onPick) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      colors.forEach(color => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'shirt-swatch' + (color === selectedColor ? ' active' : '');
+        btn.style.background = color;
+        btn.title = color;
+        btn.onclick = () => onPick(color);
+        container.appendChild(btn);
+      });
+    }
+
+    function refreshShirtSwatches() {
+      buildShirtSwatches('shirt-dye-swatches', SHIRT_DESIGN_SWATCHES, shirtDesigner.dyeColor, color => {
+        shirtDesigner.dyeColor = color;
+        refreshShirtSwatches();
+        renderShirtDesignerPreview();
+      });
+      buildShirtSwatches('shirt-paint-swatches', SHIRT_DESIGN_SWATCHES, shirtDesigner.paintColor, color => {
+        shirtDesigner.paintColor = color;
+        refreshShirtSwatches();
+      });
+    }
+
+    function initShirtDesigner() {
+      if (shirtDesigner.initialized) return;
+      shirtDesigner.initialized = true;
+      shirtDesigner.canvas = document.getElementById('shirt-designer-canvas');
+      shirtDesigner.ctx = shirtDesigner.canvas.getContext('2d');
+      shirtDesigner.paintCanvas = createOffscreenCanvas(170, 107);
+      shirtDesigner.paintCtx = shirtDesigner.paintCanvas.getContext('2d');
+      setShirtDesignerTool('brush');
+      setShirtBrushSize(4);
+      refreshShirtSwatches();
+
+      const getPoint = (ev) => {
+        const rect = shirtDesigner.canvas.getBoundingClientRect();
+        const src = ev.touches ? ev.touches[0] : ev;
+        return {
+          x: (src.clientX - rect.left) / rect.width * shirtDesigner.canvas.width,
+          y: (src.clientY - rect.top) / rect.height * shirtDesigner.canvas.height,
+        };
+      };
+
+      const drawSegment = (x1, y1, x2, y2) => {
+        const ctx = shirtDesigner.paintCtx;
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = shirtDesigner.brushSize;
+        ctx.globalCompositeOperation = shirtDesigner.tool === 'eraser' ? 'destination-out' : 'source-over';
+        ctx.strokeStyle = shirtDesigner.paintColor;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.restore();
+        renderShirtDesignerPreview();
+      };
+
+      const start = (ev) => {
+        ev.preventDefault();
+        const pt = getPoint(ev);
+        shirtDesigner.isDrawing = true;
+        shirtDesigner.lastX = pt.x;
+        shirtDesigner.lastY = pt.y;
+        drawSegment(pt.x, pt.y, pt.x, pt.y);
+      };
+
+      const move = (ev) => {
+        if (!shirtDesigner.isDrawing) return;
+        ev.preventDefault();
+        const pt = getPoint(ev);
+        drawSegment(shirtDesigner.lastX, shirtDesigner.lastY, pt.x, pt.y);
+        shirtDesigner.lastX = pt.x;
+        shirtDesigner.lastY = pt.y;
+      };
+
+      const end = () => {
+        if (!shirtDesigner.isDrawing) return;
+        shirtDesigner.isDrawing = false;
+        snapshotShirtDesigner();
+      };
+
+      shirtDesigner.canvas.addEventListener('mousedown', start);
+      shirtDesigner.canvas.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', end);
+      shirtDesigner.canvas.addEventListener('touchstart', start, { passive: false });
+      shirtDesigner.canvas.addEventListener('touchmove', move, { passive: false });
+      document.addEventListener('touchend', end);
+      document.addEventListener('touchcancel', end);
+    }
+
+    function ensureShirtDesignerAssets() {
+      if (shirtDesigner.assetsPromise) return shirtDesigner.assetsPromise;
+      shirtDesigner.assetsPromise = Promise.all([
+        new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = 'cust_shirt_blank.png';
+        }),
+        new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+          img.src = 'cust_shirt_outline.png';
+        })
+      ]).then(([blankImg, outlineImg]) => {
+        shirtDesigner.blankImg = blankImg;
+        shirtDesigner.outlineImg = outlineImg;
+      });
+      return shirtDesigner.assetsPromise;
+    }
+
+    function maskCanvasFromImage(sourceCanvas) {
+      const canvas = createOffscreenCanvas(170, 107);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(sourceCanvas, 0, 0);
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.drawImage(shirtDesigner.blankImg, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      return canvas;
+    }
+
+    function composeCurrentShirt(targetCanvas) {
+      const ctx = targetCanvas.getContext('2d');
+      ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+      const dyed = createOffscreenCanvas(targetCanvas.width, targetCanvas.height);
+      const dyedCtx = dyed.getContext('2d');
+      dyedCtx.fillStyle = shirtDesigner.dyeColor;
+      dyedCtx.fillRect(0, 0, dyed.width, dyed.height);
+      dyedCtx.globalCompositeOperation = 'destination-in';
+      dyedCtx.drawImage(shirtDesigner.blankImg, 0, 0);
+      dyedCtx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(dyed, 0, 0);
+
+      const maskedPaint = maskCanvasFromImage(shirtDesigner.paintCanvas);
+      ctx.drawImage(maskedPaint, 0, 0);
+      ctx.drawImage(shirtDesigner.outlineImg, 0, 0);
+    }
+
+    function renderShirtDesignerPreview() {
+      if (!shirtDesigner.blankImg || !shirtDesigner.outlineImg) return;
+      composeCurrentShirt(shirtDesigner.canvas);
+    }
+
+    function resetShirtDesigner() {
+      shirtDesigner.paintCtx.clearRect(0, 0, shirtDesigner.paintCanvas.width, shirtDesigner.paintCanvas.height);
+      shirtDesigner.history = [];
+      snapshotShirtDesigner();
+      renderShirtDesignerPreview();
+    }
+
+    function undoShirtDesigner() {
+      if (shirtDesigner.history.length <= 1) return;
+      shirtDesigner.history.pop();
+      shirtDesigner.paintCtx.putImageData(shirtDesigner.history[shirtDesigner.history.length - 1], 0, 0);
+      renderShirtDesignerPreview();
+    }
+
+    function clearShirtDesigner() {
+      shirtDesigner.paintCtx.clearRect(0, 0, shirtDesigner.paintCanvas.width, shirtDesigner.paintCanvas.height);
+      snapshotShirtDesigner();
+      renderShirtDesignerPreview();
+    }
+
+    async function openShirtDesigner() {
+      if (!inventory['shirt_design_kit'] || inventory['shirt_design_kit'] <= 0) return;
+      initShirtDesigner();
+      await ensureShirtDesignerAssets();
+      closeCloset();
+      document.getElementById('shirt-designer-overlay').classList.add('active');
+      resetShirtDesigner();
+    }
+
+    function closeShirtDesigner() {
+      document.getElementById('shirt-designer-overlay').classList.remove('active');
+      shirtDesigner.isDrawing = false;
+    }
+
+    function promptShirtKitDecision() {
+      if (!inventory['shirt_design_kit'] || inventory['shirt_design_kit'] <= 0) return;
+      const designNow = confirm('Design your shirt now? Press Cancel to design later.');
+      if (designNow) openShirtDesigner();
+    }
+
+    function cropCanvasToAlpha(sourceCanvas, padding = 2) {
+      const ctx = sourceCanvas.getContext('2d');
+      const { width, height } = sourceCanvas;
+      const data = ctx.getImageData(0, 0, width, height).data;
+      let minX = width, minY = height, maxX = -1, maxY = -1;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const alpha = data[(y * width + x) * 4 + 3];
+          if (!alpha) continue;
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+        }
+      }
+      if (maxX < minX || maxY < minY) return sourceCanvas;
+      minX = Math.max(0, minX - padding);
+      minY = Math.max(0, minY - padding);
+      maxX = Math.min(width - 1, maxX + padding);
+      maxY = Math.min(height - 1, maxY + padding);
+      const cropped = createOffscreenCanvas(maxX - minX + 1, maxY - minY + 1);
+      cropped.getContext('2d').drawImage(sourceCanvas, minX, minY, cropped.width, cropped.height, 0, 0, cropped.width, cropped.height);
+      return cropped;
+    }
+
+    function saveCustomShirt() {
+      if (!inventory['shirt_design_kit'] || inventory['shirt_design_kit'] <= 0) return;
+      const finalCanvas = createOffscreenCanvas(170, 107);
+      composeCurrentShirt(finalCanvas);
+      const iconCanvas = cropCanvasToAlpha(finalCanvas, 1);
+
+      customShirtCounter += 1;
+      const shirtId = `custom_shirt_${customShirtCounter}`;
+      customShirts.push({
+        id: shirtId,
+        name: `Custom Shirt ${customShirtCounter}`,
+        type: 'wearable',
+        slot: 'body',
+        icon: iconCanvas.toDataURL('image/png'),
+        src: finalCanvas.toDataURL('image/png'),
+        desc: 'Your custom shirt!',
+        unlimited: false,
+        qty: 1
+      });
+
+      ownedItems.add(shirtId);
+      inventory[shirtId] = 1;
+      inventory['shirt_design_kit']--;
+      if (inventory['shirt_design_kit'] <= 0) delete inventory['shirt_design_kit'];
+      equipped.body = shirtId;
+      applyEquipped();
+      closeShirtDesigner();
+      saveGame();
+      renderShop();
+      renderClosetInventory();
+    }
+
     function awardHeart() {
       heartsFilled++;
       if (heartsFilled >= HEARTS_PER_DOLLAR) {
@@ -1626,6 +2102,9 @@
       for (const item of SHOP_ITEMS) {
         let alreadyOwned = !item.unlimited && ownedItems.has(item.id);
         let hideFromShop = false;
+        if (item.type === 'designkit') {
+          alreadyOwned = (inventory[item.id] || 0) > 0;
+        }
         if (item.type === 'paintbox') {
           const unrevealed = MYSTERY_PAINT_ITEMS.filter(p => !ownedItems.has(p.id)).length;
           const cansHeld = inventory['paint_can'] || 0;
@@ -1638,7 +2117,7 @@
           alreadyOwned = unrevealed === 0 || boxesHeld >= unrevealed;
           hideFromShop = unrevealed === 0;
         }
-        if (alreadyOwned && item.type !== 'blindbox' && item.type !== 'paintbox' && item.type !== 'hairbox') {
+        if (alreadyOwned && item.type !== 'blindbox' && item.type !== 'paintbox' && item.type !== 'hairbox' && item.type !== 'designkit') {
           hideFromShop = true;
         }
         if (hideFromShop) continue;
@@ -1662,6 +2141,8 @@
           const pool = item.type === 'paintbox' ? MYSTERY_PAINT_ITEMS : HAIR_DYE_ITEMS;
           const allDone = pool.every(p => ownedItems.has(p.id));
           btn.innerText = allDone ? 'Owned \u2713' : 'Open it first!';
+        } else if (item.type === 'designkit' && alreadyOwned) {
+          btn.innerText = 'Open it first!';
         } else {
           btn.innerText = alreadyOwned ? 'Owned \u2713' : ('$' + item.price);
         }
@@ -1677,6 +2158,7 @@
       const item = SHOP_ITEMS.find(i => i.id===itemId);
       if (!item) return;
       if (!item.unlimited && ownedItems.has(itemId)) return;
+      if (item.type === 'designkit' && (inventory[itemId] || 0) > 0) return;
       if (item.type === 'paintbox') {
         const unrevealed = MYSTERY_PAINT_ITEMS.filter(p => !ownedItems.has(p.id)).length;
         const cansHeld = inventory['paint_can'] || 0;
@@ -1698,6 +2180,7 @@
       saveGame();
       renderTopBar();
       renderShop();
+      if (item.type === 'designkit') setTimeout(promptShirtKitDecision, 0);
     }
 
     // ================================================================
@@ -1721,7 +2204,7 @@
       const wearables   = allIds.filter(id => { const d=getItemDef(id); return d&&d.type==='wearable'; });
       const consumables = allIds.filter(id => { const d=getItemDef(id); return d&&d.type==='consumable'&&d.slot!=='hair'; });
       const hairOptions = getPermanentHairItems().filter(h => ownedItems.has(h.id));
-      const blindboxes  = allIds.filter(id => { const d=getItemDef(id); return d&&(d.type==='blindbox'||d.type==='paintbox'||d.type==='hairbox'); });
+      const blindboxes  = allIds.filter(id => { const d=getItemDef(id); return d&&(d.type==='blindbox'||d.type==='paintbox'||d.type==='hairbox'||d.type==='designkit'); });
       const paints      = PAINT_ITEMS.filter(p => ownedItems.has(p.id)).map(p => p.id);
       const posters     = allIds.filter(id => { const d=getItemDef(id); return d&&d.type==='poster'; });
       const keychains   = allIds.filter(id => KEYCHAIN_ITEMS.some(k=>k.id===id));
@@ -1794,6 +2277,7 @@
         if (def.type==='blindbox') tile.onclick=()=>openBlindBox(def.id);
         if (def.type==='paintbox') tile.onclick=()=>openPaintCan();
         if (def.type==='hairbox') tile.onclick=()=>openHairDyeBox();
+        if (def.type==='designkit') tile.onclick=()=>openShirtDesigner();
         return tile;
       });
 
@@ -1887,7 +2371,7 @@
     // ================================================================
 
     function toggleEquip(itemId) {
-      const item = SHOP_ITEMS.find(i => i.id===itemId);
+      const item = getItemDef(itemId);
       if (!item || item.type!=='wearable') return;
       const slot = item.slot;
       const overlay = document.getElementById(`char-${slot}-overlay`);
@@ -2551,6 +3035,7 @@
     // ================================================================
 
     loadGame();
+    initShirtDesigner();
     setupRoom();
     renderTopBar();
     setMode(mode);
