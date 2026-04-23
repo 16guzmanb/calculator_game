@@ -192,15 +192,10 @@
       background: rgba(255,255,255,0.08);
       border-radius: 10px; padding: 7px 9px; margin-bottom: 6px;
     }
-    .shop-icon-frame {
-      width: 38px; height: 38px;
-      border-radius: 6px; background: rgba(255,255,255,0.12); flex-shrink: 0;
-      overflow: hidden; position: relative;
-    }
     .shop-icon {
       width: 38px; height: 38px;
       object-fit: contain; image-rendering: pixelated;
-      border-radius: 6px;
+      border-radius: 6px; background: rgba(255,255,255,0.12); flex-shrink: 0;
     }
     .shop-info { flex: 1; min-width: 0; }
     .shop-name { font-size: 13px; }
@@ -414,19 +409,6 @@
     }
     .placed-item:hover { filter: drop-shadow(0 0 4px #ff69b4); }
     .placed-item.large-keychain { transform: scale(1.18); transform-origin: center center; }
-    .placed-item-zoom-frame {
-      aspect-ratio: 1;
-      overflow: visible;
-      transform-origin: center center;
-    }
-    .placed-item-art {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      image-rendering: pixelated;
-      pointer-events: none;
-      display: block;
-    }
     .placed-item.poster-size { width: 22%; }
     .placed-item.glow-lamp { filter: drop-shadow(0 0 8px #ff69b4) drop-shadow(0 0 16px rgba(255,105,180,0.4)); }
     .placed-item.glow-lamp:hover { filter: drop-shadow(0 0 12px #ff69b4) drop-shadow(0 0 22px rgba(255,105,180,0.5)); }
@@ -646,7 +628,7 @@
 
     const SHOP_ITEMS = [
       { id:'blind_box',       name:'Blind Box',       price:5,  type:'blindbox',   boxPool:'classic_keychains', icon:'blind_box_icon.png',     desc:'Mystery keychain inside!',            unlimited:true,  qty:1 },
-      { id:'blind_box_2',     name:'Xoxo Series Blind Box', price:0, type:'blindbox', boxPool:'keychains_set_2', icon:'Keychain_Set_2-7.png', desc:'A fresh mystery keychain inside!', unlimited:true, qty:1, iconZoom:1.65 },
+      { id:'blind_box_2',     name:'Xoxo Series Blind Box', price:0, type:'blindbox', boxPool:'keychains_set_2', icon:'Keychain_Set_2-7.png', desc:'A fresh mystery keychain inside!', unlimited:true, qty:1 },
       { id:'pink_contacts',   name:'Pink Contacts',   price:3,  type:'wearable',   slot:'eyes',  icon:'pink_contacts_icon.png',   src:'pink_contacts.png',   desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'pink_black_contacts', name:'Pink & Black Contacts', price:3, type:'wearable', slot:'eyes', icon:'pink_black_contacts_icon.png', src:'pink_black_contacts.png', desc:'Own once, toggle in closet.', unlimited:false, qty:1 },
       { id:'rainbow_contacts', name:'Rainbow Contacts', price:3, type:'wearable', slot:'eyes', icon:'rainbow_contacts_icon.png', src:'rainbow_contacts.png', desc:'Own once, toggle in closet.', unlimited:false, qty:1 },
@@ -696,12 +678,12 @@
     ];
 
     const KEYCHAIN_SET_2_ITEMS = [
-      { id:'creepy_cutie_keychain', name:'Creepy Cutie', icon:'Keychain_Set_2-1.png', src:'Keychain_Set_2-1.png', styleClass:'large-keychain', iconZoom:1.65, roomZoom:1.85 },
-      { id:'cheetah_punk_keychain', name:'Cheetah Punk', icon:'Keychain_Set_2-2.png', src:'Keychain_Set_2-2.png', styleClass:'large-keychain', iconZoom:1.65, roomZoom:1.85 },
-      { id:'doodle_keychain',       name:'Doodle',       icon:'Keychain_Set_2-3.png', src:'Keychain_Set_2-3.png', styleClass:'large-keychain', iconZoom:1.65, roomZoom:1.85 },
-      { id:'rosette_keychain',      name:'Rosette',      icon:'Keychain_Set_2-4.png', src:'Keychain_Set_2-4.png', styleClass:'large-keychain', iconZoom:1.65, roomZoom:1.85 },
-      { id:'cheetah_girl_keychain', name:'Cheetah Girl', icon:'Keychain_Set_2-5.png', src:'Keychain_Set_2-5.png', styleClass:'large-keychain', iconZoom:1.65, roomZoom:1.85 },
-      { id:'xoxo_keychain',         name:'Xoxo',         icon:'Keychain_Set_2-6.png', src:'Keychain_Set_2-6.png', styleClass:'large-keychain', iconZoom:1.65, roomZoom:1.85 },
+      { id:'creepy_cutie_keychain', name:'Creepy Cutie', icon:'Keychain_Set_2-1.png', src:'Keychain_Set_2-1.png', styleClass:'large-keychain' },
+      { id:'cheetah_punk_keychain', name:'Cheetah Punk', icon:'Keychain_Set_2-2.png', src:'Keychain_Set_2-2.png', styleClass:'large-keychain' },
+      { id:'doodle_keychain',       name:'Doodle',       icon:'Keychain_Set_2-3.png', src:'Keychain_Set_2-3.png', styleClass:'large-keychain' },
+      { id:'rosette_keychain',      name:'Rosette',      icon:'Keychain_Set_2-4.png', src:'Keychain_Set_2-4.png', styleClass:'large-keychain' },
+      { id:'cheetah_girl_keychain', name:'Cheetah Girl', icon:'Keychain_Set_2-5.png', src:'Keychain_Set_2-5.png', styleClass:'large-keychain' },
+      { id:'xoxo_keychain',         name:'Xoxo',         icon:'Keychain_Set_2-6.png', src:'Keychain_Set_2-6.png', styleClass:'large-keychain' },
     ];
 
     const KEYCHAIN_ITEMS = [...CLASSIC_KEYCHAIN_ITEMS, ...KEYCHAIN_SET_2_ITEMS];
@@ -1641,14 +1623,10 @@
         const row = document.createElement('div');
         row.className = 'shop-item';
 
-        const iconFrame = document.createElement('div');
-        iconFrame.className = 'shop-icon-frame';
         const img = document.createElement('img');
         img.className = 'shop-icon'; img.src = item.icon; img.alt = item.name;
-        applyArtScale(img, item, 'icon');
         applyIconMode(img, item);
-        img.onerror = function() { iconFrame.style.background='#ff69b4'; this.style.opacity='0.6'; };
-        iconFrame.appendChild(img);
+        img.onerror = function() { this.style.background='#ff69b4'; this.style.opacity='0.6'; };
 
         const info = document.createElement('div');
         info.className = 'shop-info';
@@ -1668,7 +1646,7 @@
         btn.title = (!canAfford && !alreadyOwned) ? 'Not enough money!' : '';
         btn.onclick = () => buyItem(item.id);
 
-        row.appendChild(iconFrame); row.appendChild(info); row.appendChild(btn);
+        row.appendChild(img); row.appendChild(info); row.appendChild(btn);
         listEl.appendChild(row);
       }
     }
@@ -1849,7 +1827,6 @@
       const img = document.createElement('img');
       img.src = def.icon; img.alt = def.name;
       if (def.styleClass === 'large-keychain') img.classList.add('large-keychain-icon');
-      applyArtScale(img, def, 'icon');
       applyIconMode(img, def);
       img.onerror = function() {
         this.style.display='none';
@@ -1881,14 +1858,6 @@
       if (!img || !def || def.iconMode !== 'left-half') return;
       img.style.objectFit = 'cover';
       img.style.objectPosition = 'left center';
-    }
-
-    function applyArtScale(img, def, mode = 'icon') {
-      if (!img || !def) return;
-      const zoom = mode === 'room' ? def.roomZoom : def.iconZoom;
-      if (!zoom) return;
-      img.style.transform = `scale(${zoom})`;
-      img.style.transformOrigin = 'center center';
     }
 
     // ================================================================
@@ -2233,32 +2202,20 @@
       const def = KEYCHAIN_ITEMS.find(k => k.id===ri.id) || SHOP_ITEMS.find(s => s.id===ri.id && s.type==='poster');
       if (!def) return;
       const layer = document.getElementById('items-layer');
-      const usesZoomFrame = !!def.roomZoom;
-      const img = document.createElement(usesZoomFrame ? 'div' : 'img');
+      const img = document.createElement('img');
       img.className = 'placed-item';
-      if (usesZoomFrame) img.classList.add('placed-item-zoom-frame');
-      if (def.styleClass && !usesZoomFrame) img.classList.add(def.styleClass);
+      if (def.styleClass) img.classList.add(def.styleClass);
       if (ri.id === 'skull_lamp') img.classList.add('glow-lamp');
       const itemDef = SHOP_ITEMS.find(s => s.id === ri.id && s.type === 'poster');
       if (itemDef && ri.id.startsWith('poster_')) img.classList.add('poster-size');
+      img.src       = def.src;
+      img.alt       = def.name;
       img.dataset.instance = ri.instanceId;
       img.style.left = ri.xPct + '%';
       img.style.top  = ri.yPct + '%';
       img.title = `${def.name} \u2014 double-click to return to closet`;
       img.draggable = true;
-      if (usesZoomFrame) {
-        const inner = document.createElement('img');
-        inner.className = 'placed-item-art';
-        inner.src = def.src;
-        inner.alt = def.name;
-        applyArtScale(inner, def, 'room');
-        inner.onerror = function() { img.style.background='#ffb3de'; img.style.borderRadius='4px'; };
-        img.appendChild(inner);
-      } else {
-        img.src       = def.src;
-        img.alt       = def.name;
-        img.onerror = function() { this.style.background='#ffb3de'; this.style.borderRadius='4px'; };
-      }
+      img.onerror = function() { this.style.background='#ffb3de'; this.style.borderRadius='4px'; };
 
       img.addEventListener('dragstart', e => {
         e.stopPropagation();
