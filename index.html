@@ -628,7 +628,7 @@
 
     const SHOP_ITEMS = [
       { id:'blind_box',       name:'Blind Box',       price:5,  type:'blindbox',   boxPool:'classic_keychains', icon:'blind_box_icon.png',     desc:'Mystery keychain inside!',            unlimited:true,  qty:1 },
-      { id:'blind_box_2',     name:'Xoxo Series Blind Box', price:5, type:'blindbox', boxPool:'keychains_set_2', icon:'Keychain_Set_2-7.png', desc:'A fresh mystery keychain inside!', unlimited:true, qty:1 },
+      { id:'blind_box_2',     name:'Xoxo Series Blind Box', price:0, type:'blindbox', boxPool:'keychains_set_2', icon:'Keychain_Set_2-7.png', desc:'A fresh mystery keychain inside!', unlimited:true, qty:1 },
       { id:'pink_contacts',   name:'Pink Contacts',   price:3,  type:'wearable',   slot:'eyes',  icon:'pink_contacts_icon.png',   src:'pink_contacts.png',   desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
       { id:'pink_black_contacts', name:'Pink & Black Contacts', price:3, type:'wearable', slot:'eyes', icon:'pink_black_contacts_icon.png', src:'pink_black_contacts.png', desc:'Own once, toggle in closet.', unlimited:false, qty:1 },
       { id:'rainbow_contacts', name:'Rainbow Contacts', price:3, type:'wearable', slot:'eyes', icon:'rainbow_contacts_icon.png', src:'rainbow_contacts.png', desc:'Own once, toggle in closet.', unlimited:false, qty:1 },
@@ -659,7 +659,7 @@
       { id:'purple_checker_paint', name:'Purple Checker Paint', price:10, type:'paint', icon:'paint-1.png', src:'paint-1.png', iconMode:'left-half', desc:'Click in closet to paint your room.', unlimited:false, qty:1 },
       { id:'beige_baddie_paint', name:'Beige Baddie Paint', price:10, type:'paint', icon:'paint-2.png', src:'paint-2.png', iconMode:'left-half', desc:'Click in closet to paint your room.', unlimited:false, qty:1 },
       { id:'rainbow_explosion_paint', name:'Rainbow Explosion Paint', price:10, type:'paint', icon:'paint-3.png', src:'paint-3.png', iconMode:'left-half', desc:'Click in closet to paint your room.', unlimited:false, qty:1 },
-      { id:'mystery_hair_dye_box', name:'Mystery Hair Dye', price:4, type:'hairbox', icon:'Hair-7.png', desc:'A mystery hair dye style inside!', unlimited:true, qty:1 },
+      { id:'mystery_hair_dye_box', name:'Mystery Hair Dye', price:0, type:'hairbox', icon:'Hair-7.png', desc:'A mystery hair dye style inside!', unlimited:true, qty:1 },
       { id:'poster_1', name:'Poster 1', price:2, type:'poster', icon:'poster_1.png', src:'poster_1.png', desc:'Place in your room!', unlimited:false, qty:1 },
       { id:'poster_2', name:'Poster 2', price:2, type:'poster', icon:'poster_2.png', src:'poster_2.png', desc:'Place in your room!', unlimited:false, qty:1 },
       { id:'poster_3', name:'Poster 3', price:2, type:'poster', icon:'poster_3.png', src:'poster_3.png', desc:'Place in your room!', unlimited:false, qty:1 },
@@ -704,12 +704,12 @@
     ];
 
     const HAIR_DYE_ITEMS = [
-      { id:'rumi_hair',         name:'Rumi Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-1.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
-      { id:'mira_hair',         name:'Mira Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-2.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
-      { id:'zoey_hair',         name:'Zoey Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-3.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
-      { id:'space_buns_hair',   name:'Space Buns',   type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-4.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
-      { id:'color_crazy_hair',  name:'Color Crazy',  type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-5.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
-      { id:'drippy_hair',       name:'Drippy',       type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-6.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
+      { id:'drippy_hair',       name:'Drippy',       type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-1.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
+      { id:'color_crazy_hair',  name:'Color Crazy',  type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-2.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
+      { id:'space_buns_hair',   name:'Space Buns',   type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-3.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
+      { id:'zoey_hair',         name:'Zoey Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-4.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
+      { id:'mira_hair',         name:'Mira Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-5.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
+      { id:'rumi_hair',         name:'Rumi Hair',    type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-6.png', desc:'Single use. Click in closet to apply.', unlimited:false, qty:1 },
     ];
 
     function getItemDef(id) {
