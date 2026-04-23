@@ -406,9 +406,10 @@
       position: absolute; width: 9%;
       cursor: grab; image-rendering: pixelated; z-index: 45;
       user-select: none; transition: filter 0.15s; pointer-events: all;
+      transform: translate(-50%, -50%);
     }
     .placed-item:hover { filter: drop-shadow(0 0 4px #ff69b4); }
-    .placed-item.large-keychain { transform: scale(1.18); transform-origin: center center; }
+    .placed-item.large-keychain { transform: translate(-50%, -50%) scale(1.18); transform-origin: center center; }
     .placed-item.poster-size { width: 22%; }
     .placed-item.glow-lamp { filter: drop-shadow(0 0 8px #ff69b4) drop-shadow(0 0 16px rgba(255,105,180,0.4)); }
     .placed-item.glow-lamp:hover { filter: drop-shadow(0 0 12px #ff69b4) drop-shadow(0 0 22px rgba(255,105,180,0.5)); }
@@ -702,6 +703,8 @@
       { id:'beige_baddie_paint', name:'Beige Baddie Paint', icon:'paint-2.png', src:'paint-2.png', iconMode:'left-half' },
       { id:'rainbow_explosion_paint', name:'Rainbow Explosion Paint', icon:'paint-3.png', src:'paint-3.png', iconMode:'left-half' },
     ];
+
+    const MYSTERY_PAINT_ITEMS = PAINT_ITEMS.filter(p => ['purple_paint','kpop_colors_paint','checker_paint','mgk_paint_job'].includes(p.id));
 
     const HAIR_DYE_ITEMS = [
       { id:'drippy_hair',       name:'Drippy',       type:'consumable', slot:'hair', icon:'Hair-7.png', src:'Hair-1.png', desc:'Unlock once, then reapply anytime in closet.', unlimited:false, qty:1 },
@@ -1149,7 +1152,7 @@
         tierIndex    = d.tierIndex ?? 0;
         rightStreak  = d.rightStreak ?? 0;
         wrongStreak  = d.wrongStreak ?? 0;
-        mode         = d.mode ?? 'add';
+        mode         = 'add';
         inventory    = d.inventory ?? {};
         ownedItems   = new Set(d.ownedItems ?? []);
         equipped     = { hair:null, body:null, tank:null, legs:null, shoes:null, eyes:null, smile:null, ...(d.equipped ?? {}) };
@@ -1205,7 +1208,7 @@
       const calcBg = document.getElementById('calc-bg');
       if (mode === 'clock') {
         if (calcBg) { calcBg.style.display = 'none'; }
-        document.querySelector('.calc').style.background = '#000';
+        document.querySelector('.calc').style.background = '#f4a7ad';
         // Hide face elements
         ['calc-eye-static','calc-eye-anim'].forEach(id => {
           const el = document.getElementById(id); if (el) el.style.display = 'none';
@@ -1524,6 +1527,25 @@
       }
     }
 
+    function burstPinkConfetti() {
+      const pieces = ['\u2665', '\u2726', '\u25CF'];
+      const pinks = ['#ff69b4', '#ff8fcf', '#ffb6e1', '#ff4fa3'];
+      const count = 34;
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-heart';
+        el.innerText = pieces[i % pieces.length];
+        el.style.left = Math.random() * 100 + 'vw';
+        el.style.top = -(Math.random() * 20 + 10) + 'px';
+        el.style.fontSize = (14 + Math.random() * 16) + 'px';
+        el.style.color = pinks[Math.floor(Math.random() * pinks.length)];
+        el.style.animationDuration = (1.1 + Math.random() * 0.7) + 's';
+        el.style.animationDelay = (Math.random() * 0.3) + 's';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2200);
+      }
+    }
+
     function awardHeart() {
       heartsFilled++;
       if (heartsFilled >= HEARTS_PER_DOLLAR) {
@@ -1605,7 +1627,7 @@
         let alreadyOwned = !item.unlimited && ownedItems.has(item.id);
         let hideFromShop = false;
         if (item.type === 'paintbox') {
-          const unrevealed = PAINT_ITEMS.filter(p => !ownedItems.has(p.id)).length;
+          const unrevealed = MYSTERY_PAINT_ITEMS.filter(p => !ownedItems.has(p.id)).length;
           const cansHeld = inventory['paint_can'] || 0;
           alreadyOwned = unrevealed === 0 || cansHeld >= unrevealed;
           hideFromShop = unrevealed === 0;
@@ -1637,7 +1659,7 @@
         const canAfford = money >= item.price;
         btn.disabled = alreadyOwned || !canAfford;
         if ((item.type === 'paintbox' || item.type === 'hairbox') && alreadyOwned) {
-          const pool = item.type === 'paintbox' ? PAINT_ITEMS : HAIR_DYE_ITEMS;
+          const pool = item.type === 'paintbox' ? MYSTERY_PAINT_ITEMS : HAIR_DYE_ITEMS;
           const allDone = pool.every(p => ownedItems.has(p.id));
           btn.innerText = allDone ? 'Owned \u2713' : 'Open it first!';
         } else {
@@ -1656,7 +1678,7 @@
       if (!item) return;
       if (!item.unlimited && ownedItems.has(itemId)) return;
       if (item.type === 'paintbox') {
-        const unrevealed = PAINT_ITEMS.filter(p => !ownedItems.has(p.id)).length;
+        const unrevealed = MYSTERY_PAINT_ITEMS.filter(p => !ownedItems.has(p.id)).length;
         const cansHeld = inventory['paint_can'] || 0;
         if (unrevealed === 0 || cansHeld >= unrevealed) return;
       }
@@ -2001,6 +2023,7 @@
 
       setTimeout(() => {
         animImg.classList.remove('wiggling');
+        burstPinkConfetti();
         void animImg.offsetWidth;
         animImg.src = prize.icon;
         animImg.classList.add('popping');
@@ -2031,7 +2054,7 @@
     function openPaintCan() {
       if (!inventory['paint_can'] || inventory['paint_can'] <= 0) return;
 
-      const nextPaint = PAINT_ITEMS.find(p => !ownedItems.has(p.id));
+      const nextPaint = MYSTERY_PAINT_ITEMS.find(p => !ownedItems.has(p.id));
       if (!nextPaint) return;
 
       inventory['paint_can']--;
@@ -2054,6 +2077,7 @@
 
       setTimeout(() => {
         animImg.classList.remove('wiggling');
+        burstPinkConfetti();
         animImg.style.display = 'none';
         nameEl.innerText = `${nextPaint.name}! \uD83C\uDFA8`;
         setTimeout(() => nameEl.classList.add('show'), 150);
@@ -2096,6 +2120,7 @@
 
       setTimeout(() => {
         animImg.classList.remove('wiggling');
+        burstPinkConfetti();
         animImg.style.display = 'none';
         nameEl.innerText = `${prize.name}! \u2728`;
         setTimeout(() => nameEl.classList.add('show'), 150);
