@@ -256,6 +256,21 @@
       left: 0%; top: 10%; width: 22%; height: 78%;
       background: transparent; border: none; cursor: pointer;
     }
+    #clean-room-btn {
+      position: absolute;
+      right: 2.5%;
+      top: 3%;
+      z-index: 52;
+      border: 0;
+      border-radius: 9px;
+      padding: 6px 10px;
+      cursor: pointer;
+      background: rgba(17,17,17,0.72);
+      color: #fff;
+      font-size: 12px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.24);
+    }
+    #clean-room-btn:hover { background: rgba(255,105,180,0.88); }
 
     /* Character drop zone for consumable drag */
     #char-drop-zone {
@@ -586,6 +601,7 @@
                 <img id="room-calc-overlay" src="mini_calc_icon.png" alt="" />
               </div>
 
+              <button id="clean-room-btn" type="button" onclick="cleanRoom()">Clean Room</button>
               <button class="closet-hitbox" id="closet-hitbox" type="button" aria-label="Open closet"></button>
 
               <!-- Drop zone for dragging beauty items onto character -->
@@ -1762,10 +1778,11 @@
           const def = PAINT_ITEMS.find(p => p.id === id);
           if (!def) return;
           const isOn = activePaint === id;
-          const tile = buildTile(def, isOn);
+          const entry = buildTile(def, isOn, 0, { showLabel: true });
+          const tile = entry.tile || entry;
           tile.onclick = () => togglePaint(id);
           tile.title = isOn ? 'Click to remove paint' : 'Click to paint room';
-          grid.appendChild(tile);
+          grid.appendChild(entry);
         });
         panel.appendChild(grid);
       }
@@ -2196,6 +2213,17 @@
       img.addEventListener('touchstart', e => touchStartPlacedItem(e, ri), {passive:false});
 
       layer.appendChild(img);
+    }
+
+    function cleanRoom() {
+      if (!roomItems.length) return;
+      roomItems.forEach(ri => {
+        inventory[ri.id] = (inventory[ri.id] || 0) + 1;
+      });
+      roomItems = [];
+      document.querySelectorAll('.placed-item').forEach(el => el.remove());
+      saveGame();
+      renderClosetInventory();
     }
 
     function applyRoomItems() {
