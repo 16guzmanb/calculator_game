@@ -798,6 +798,7 @@
     // ================================================================
 
     const SHOP_ITEMS = [
+      { id:'shopping_spree_card', name:'Shopping Spree Card', price:0, type:'spreecard', icon:'blind_box_icon.png', desc:'A one-time gift! Adds $200 to your balance.', unlimited:false, qty:1 },
       { id:'blind_box',       name:'Blind Box',       price:5,  type:'blindbox',   boxPool:'classic_keychains', icon:'blind_box_icon.png',     desc:'Mystery keychain inside!',            unlimited:true,  qty:1 },
       { id:'blind_box_2',     name:'Xoxo Series Blind Box', price:5, type:'blindbox', boxPool:'keychains_set_2', icon:'Keychain_Set_2-7.png', desc:'A fresh mystery keychain inside!', unlimited:true, qty:1 },
       { id:'pink_contacts',   name:'Pink Contacts',   price:3,  type:'wearable',   slot:'eyes',  icon:'pink_contacts_icon.png',   src:'pink_contacts.png',   desc:'Own once, toggle in closet.',       unlimited:false, qty:1 },
@@ -2143,6 +2144,8 @@
           btn.innerText = allDone ? 'Owned \u2713' : 'Open it first!';
         } else if (item.type === 'designkit' && alreadyOwned) {
           btn.innerText = 'Open it first!';
+        } else if (item.type === 'spreecard') {
+          btn.innerText = 'Claim 🛍️';
         } else {
           btn.innerText = alreadyOwned ? 'Owned \u2713' : ('$' + item.price);
         }
@@ -2168,6 +2171,17 @@
         const unrevealed = HAIR_DYE_ITEMS.filter(h => !ownedItems.has(h.id)).length;
         const boxesHeld = inventory['mystery_hair_dye_box'] || 0;
         if (unrevealed === 0 || boxesHeld >= unrevealed) return;
+      }
+      if (item.type === 'spreecard') {
+        if (ownedItems.has(itemId)) return;
+        ownedItems.add(itemId);
+        money += 200;
+        transactions.unshift({ type:'deposit', amount:200, at:new Date(), note:'Shopping Spree Card 🛍️' });
+        if (transactions.length > 5000) transactions.length = 5000;
+        saveGame();
+        renderTopBar();
+        renderShop();
+        return;
       }
       if (money < item.price) return;
       money -= item.price;
